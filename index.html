@@ -398,6 +398,17 @@ header{
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--dim);}
 
+
+.version-badge{font-size:10px;color:var(--dim);border:1px solid var(--border);padding:4px 8px;border-radius:999px;background:var(--s2)}
+.bottom-bar{position:fixed;left:0;right:0;bottom:0;z-index:90;background:rgba(13,13,15,0.96);border-top:1px solid var(--border);backdrop-filter:blur(20px);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.bottom-bar .counts{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim)}
+.bottom-bar .count-pill{padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:var(--s2)}
+.bottom-bar .export-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.export-name{background:var(--s2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 10px;outline:none;min-width:240px}
+.saved-library{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.saved-item-meta{font-size:10px;color:var(--dim);margin-top:4px}
+body{padding-bottom:64px}
+
 /* RESPONSIVE */
 @media(max-width:900px){
   .workspace{grid-template-columns:1fr;}
@@ -412,6 +423,7 @@ header{
     <span class="logo-mark">GTM</span>
     Tag Automator
   </div>
+  <div class="version-badge" id="appVersion">v1.1.0</div>
   <nav class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('builder')">Builder</button>
     <button class="nav-tab" onclick="showPage('sites')">Sites</button>
@@ -421,7 +433,9 @@ header{
     <select class="site-selector" id="activeSite" onchange="onSiteChange()">
       <option value="">— select site —</option>
     </select>
-    <button class="btn btn-primary" onclick="exportJSON()">⬇ Export JSON</button>
+    <button class="btn btn-ghost" onclick="saveCurrentReusable()">⟳ Save Reusable</button>
+    <button class="btn btn-ghost" onclick="saveTagToContainer()">＋ Save Tag</button>
+    <button class="btn btn-primary" onclick="exportJSON()">⬇ Export All</button>
   </div>
 </header>
 
@@ -433,6 +447,10 @@ header{
       <div class="sidebar-section">
         <div class="sidebar-label">Tag Templates</div>
         <div id="templateList"></div>
+        <div class="saved-library">
+          <div class="sidebar-label">Reusable Tags</div>
+          <div id="reusableList"></div>
+        </div>
       </div>
     </div>
 
@@ -479,7 +497,7 @@ header{
         <div class="field"><label>Site Name</label><input id="newSiteName" placeholder="e.g. Acme Corp"/></div>
         <div class="field"><label>GTM Container ID</label><input id="newSiteId" placeholder="GTM-XXXXXXX"/></div>
       </div>
-      <div class="field-row cols-2" style="margin-bottom:14px">
+      <div class="field-row cols-2" style="margin-bottom:12px">
         <div class="field">
           <label>Site Type</label>
           <select id="newSiteType">
@@ -489,6 +507,10 @@ header{
           </select>
         </div>
         <div class="field"><label>Known DL Events (comma-separated)</label><input id="newSiteEvents" placeholder="purchase, add_to_cart, view_item"/></div>
+      </div>
+      <div class="field-row cols-2" style="margin-bottom:14px">
+        <div class="field"><label>Site URL</label><input id="newSiteUrl" placeholder="https://example.com"/></div>
+        <div class="field"><label>Description</label><input id="newSiteDescription" placeholder="Optional notes"/></div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" onclick="addSite()">Save Site</button>
@@ -508,6 +530,21 @@ header{
       <div class="page-sub">Previously generated tag configs</div>
     </div>
     <div id="historyList"></div>
+  </div>
+</div>
+
+
+<div class="bottom-bar">
+  <div class="counts">
+    <span class="count-pill">Saved Tags: <span id="savedTagCount">0</span></span>
+    <span class="count-pill">Saved Triggers: <span id="savedTriggerCount">0</span></span>
+    <span class="count-pill">Saved Variables: <span id="savedVariableCount">0</span></span>
+    <span class="count-pill">Reusable: <span id="reusableCount">0</span></span>
+  </div>
+  <div class="export-actions">
+    <input id="exportName" class="export-name" placeholder="export filename (optional)"/>
+    <button class="btn btn-ghost" onclick="saveTagToContainer()">Save Current Tag</button>
+    <button class="btn btn-primary" onclick="exportJSON()">Export Container JSON</button>
   </div>
 </div>
 
@@ -623,6 +660,7 @@ const CONDITION_VARS = ['Page URL','Page Path','Page Hostname','Page Title','Ref
 const CONDITION_OPS = ['contains','equals','matches RegEx','starts with','ends with','does not contain','does not equal'];
 
 let state = {
+  version: '1.1.0',
   activeTemplate: null,
   tagName: '',
   params: [],
@@ -631,15 +669,21 @@ let state = {
   triggers: [],
   sites: JSON.parse(localStorage.getItem('gtm_sites')||'[]'),
   history: JSON.parse(localStorage.getItem('gtm_history')||'[]'),
+  reusable: JSON.parse(localStorage.getItem('gtm_reusable_tags')||'[]'),
   activeSite: '',
 };
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 function init(){
+  normalizeSites();
   renderTemplates();
+  renderReusable();
   renderSites();
   renderHistory();
   populateSiteDropdown();
+  updateCountsBar();
+  const versionEl = document.getElementById('appVersion');
+  if(versionEl) versionEl.textContent = 'v' + state.version;
 }
 
 // ─── PAGES ───────────────────────────────────────────────────────────────────
@@ -647,9 +691,169 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  event.target.classList.add('active');
+  const target = window.event?.target;
+  if(target) target.classList.add('active');
   if(id==='sites') renderSites();
   if(id==='history') renderHistory();
+}
+
+
+function normalizeSites(){
+  state.sites = (state.sites||[]).map((site,index)=>({
+    id: site.id || Date.now()+index,
+    name: site.name || `Site ${index+1}`,
+    containerId: site.containerId || site.gtmId || '',
+    type: site.type || 'simple',
+    events: Array.isArray(site.events) ? site.events : [],
+    url: site.url || '',
+    description: site.description || '',
+    tags: Array.isArray(site.tags) ? site.tags : [],
+    triggers: Array.isArray(site.triggers) ? site.triggers : [],
+    variables: Array.isArray(site.variables) ? site.variables : []
+  }));
+  localStorage.setItem('gtm_sites', JSON.stringify(state.sites));
+}
+
+function persistSites(){
+  localStorage.setItem('gtm_sites', JSON.stringify(state.sites));
+  updateCountsBar();
+  renderSites();
+  populateSiteDropdown();
+}
+
+function getActiveSiteObj(){
+  return state.sites.find(s=>String(s.id)===String(state.activeSite));
+}
+
+function clone(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function buildCurrentBundle(){
+  const json = buildGTMJson();
+  if(!json) return null;
+  const tag = clone(json.containerVersion.tag[0] || {});
+  const triggers = clone(json.containerVersion.trigger || []);
+  const variables = clone(json.containerVersion.variable || []);
+  const seed = Date.now().toString();
+  const triggerIds = triggers.map((t,i)=>`${seed}${i+1}`);
+  triggers.forEach((t,i)=>{ t.triggerId = triggerIds[i]; });
+  tag.tagId = tag.tagId || seed;
+  tag.firingTriggerId = triggerIds;
+  tag.notes = document.getElementById('tagNotes')?.value || '';
+  return {tag, triggers, variables, json};
+}
+
+function buildContainerExport(site){
+  const tags = clone(site.tags || []);
+  const triggers = clone(site.triggers || []);
+  const variables = clone(site.variables || []);
+  return {
+    exportFormatVersion: 2,
+    exportTime: new Date().toISOString(),
+    containerVersion: {
+      name: site.name,
+      description: site.description || '',
+      container: site.containerId ? { publicId: site.containerId } : undefined,
+      tag: tags,
+      trigger: triggers,
+      variable: variables
+    }
+  };
+}
+
+function updateCountsBar(){
+  const site = getActiveSiteObj();
+  const tags = site?.tags?.length || 0;
+  const triggers = site?.triggers?.length || 0;
+  const variables = site?.variables?.length || 0;
+  const reusable = state.reusable?.length || 0;
+  const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+  set('savedTagCount', tags);
+  set('savedTriggerCount', triggers);
+  set('savedVariableCount', variables);
+  set('reusableCount', reusable);
+}
+
+function renderReusable(){
+  const el = document.getElementById('reusableList');
+  if(!el) return;
+  if(!state.reusable.length){
+    el.innerHTML = '<div class="t-desc">No reusable tags saved yet</div>';
+    return;
+  }
+  el.innerHTML = state.reusable.map(item=>`<div class="template-item" onclick="loadReusable(${item.id})"><div class="t-name">♻ ${item.name}</div><div class="t-desc">${item.templateName || item.type || 'Saved tag'}</div><div class="saved-item-meta">${item.savedAt}</div></div>`).join('');
+}
+
+function saveCurrentReusable(){
+  const bundle = buildCurrentBundle();
+  if(!bundle){ showToast('Select a template first','error'); return; }
+  const item = {
+    id: Date.now(),
+    name: bundle.tag.name || 'Reusable Tag',
+    templateId: state.activeTemplate,
+    templateName: TEMPLATES.find(t=>t.id===state.activeTemplate)?.name || 'Template',
+    savedAt: new Date().toLocaleString(),
+    builderState: {
+      activeTemplate: state.activeTemplate,
+      tagName: state.tagName,
+      params: clone(state.params),
+      eventParams: clone(state.eventParams),
+      htmlCode: state.htmlCode,
+      triggers: clone(state.triggers)
+    }
+  };
+  state.reusable.unshift(item);
+  localStorage.setItem('gtm_reusable_tags', JSON.stringify(state.reusable.slice(0,50)));
+  renderReusable();
+  updateCountsBar();
+  showToast('Saved to reusable library','success');
+}
+
+function loadReusable(id){
+  const item = state.reusable.find(x=>x.id===id);
+  if(!item) return;
+  state.activeTemplate = item.builderState.activeTemplate;
+  state.tagName = item.builderState.tagName || '';
+  state.params = clone(item.builderState.params || []);
+  state.eventParams = clone(item.builderState.eventParams || []);
+  state.htmlCode = item.builderState.htmlCode || '';
+  state.triggers = clone(item.builderState.triggers || []);
+  renderTemplates();
+  const tmpl = TEMPLATES.find(t=>t.id===state.activeTemplate);
+  if(tmpl){
+    renderForm(tmpl);
+    const htmlEl=document.getElementById('htmlCode');
+    if(htmlEl) htmlEl.value = state.htmlCode || '';
+    updatePreview();
+  }
+  showPage('builder');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.nav-tab')?.classList.add('active');
+  showToast('Reusable tag loaded','success');
+}
+
+function saveTagToContainer(){
+  const site = getActiveSiteObj();
+  if(!site){ showToast('Select a site first','error'); return; }
+  const bundle = buildCurrentBundle();
+  if(!bundle){ showToast('Select a template first','error'); return; }
+  site.tags = site.tags || [];
+  site.triggers = site.triggers || [];
+  site.variables = site.variables || [];
+  site.tags.push(bundle.tag);
+  site.triggers.push(...bundle.triggers);
+  site.variables.push(...bundle.variables);
+  persistSites();
+  updatePreview();
+  showToast('Saved current tag to site container','success');
+}
+
+function downloadJSON(data, filename){
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
 }
 
 // ─── TEMPLATES ───────────────────────────────────────────────────────────────
@@ -977,18 +1181,9 @@ function buildGTMJson(){
     custom_html:'html'
   };
 
-  let tagConfig = {
-    type: typeMap[state.activeTemplate]||'html',
-    name: tagName,
-    liveId: 'live',
-    priority: {type:'integer',value:priority.toString()},
-    firingTriggerId:[],
-    tagFiringOption:'oncePerEvent',
-    parameter: buildParameters(tmpl)
-  };
-
-  // Build triggers
+  const seed = Date.now().toString();
   const triggersConfig = state.triggers.map((t,i)=>({
+    triggerId:`${seed}${i+1}`,
     type: mapTriggerType(t.type),
     name: `${tagName} - ${t.label}`,
     filter: t.conditions.filter(c=>c.value).map(c=>({
@@ -1006,6 +1201,17 @@ function buildGTMJson(){
       ]
     }] : undefined
   }));
+
+  let tagConfig = {
+    tagId: seed,
+    type: typeMap[state.activeTemplate]||'html',
+    name: tagName,
+    liveId: 'live',
+    priority: {type:'integer',value:priority.toString()},
+    firingTriggerId: triggersConfig.map(t=>t.triggerId),
+    tagFiringOption:'oncePerEvent',
+    parameter: buildParameters(tmpl)
+  };
 
   const container = {
     exportFormatVersion: 2,
@@ -1060,6 +1266,7 @@ function updatePreview(){
   const tagName = json.containerVersion.tag[0]?.name||'Unnamed';
   const triggerCount = json.containerVersion.trigger.length;
   const paramCount = json.containerVersion.tag[0]?.parameter?.length||0;
+  const site = getActiveSiteObj();
 
   body.innerHTML = `
     <div class="summary-card">
@@ -1067,11 +1274,12 @@ function updatePreview(){
       <div class="summary-row"><span class="summary-label">Type</span><span class="summary-val">${json.containerVersion.tag[0]?.type||'—'}</span></div>
       <div class="summary-row"><span class="summary-label">Parameters</span><span class="summary-val">${paramCount}</span></div>
       <div class="summary-row"><span class="summary-label">Triggers</span><span class="summary-val">${triggerCount} trigger${triggerCount!==1?'s':''}</span></div>
+      <div class="summary-row"><span class="summary-label">Saved In Site</span><span class="summary-val">${site ? ((site.tags?.length||0)+' tags') : 'No site selected'}</span></div>
       <div class="summary-row">
         <span class="summary-label">Status</span>
         <span class="summary-val">
           <span class="status-dot ${tagName&&triggerCount>0?'dot-green':'dot-orange'}"></span>
-          ${tagName&&triggerCount>0?'Ready to export':'Incomplete'}
+          ${tagName&&triggerCount>0?'Ready to save/export':'Incomplete'}
         </span>
       </div>
     </div>
@@ -1093,19 +1301,28 @@ function syntaxHighlight(json){
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
 function exportJSON(){
+  const site = getActiveSiteObj();
+
+  if(site && ((site.tags?.length||0) || (site.triggers?.length||0) || (site.variables?.length||0))){
+    const json = buildContainerExport(site);
+    const fileBase = (document.getElementById('exportName')?.value || `${site.name}_gtm_export`).trim().replace(/\s+/g,'_');
+    downloadJSON(json, `${fileBase}.json`);
+    state.history.unshift({id:Date.now(),name:fileBase,type:'container_export',site:site.id,time:new Date().toLocaleString(),json});
+    localStorage.setItem('gtm_history',JSON.stringify(state.history.slice(0,50)));
+    renderHistory();
+    showToast('Container export downloaded','success');
+    return;
+  }
+
   const json = buildGTMJson();
   if(!json){ showToast('Select a template first','error'); return; }
   const tagName = json.containerVersion.tag[0]?.name||'gtm-tag';
-  const blob = new Blob([JSON.stringify(json,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=`${tagName.replace(/\s+/g,'_')}_${Date.now()}.json`;
-  a.click(); URL.revokeObjectURL(url);
+  downloadJSON(json, `${tagName.replace(/\s+/g,'_')}_${Date.now()}.json`);
 
-  // Save to history
   state.history.unshift({id:Date.now(),name:tagName,type:state.activeTemplate,site:state.activeSite,time:new Date().toLocaleString(),json});
   localStorage.setItem('gtm_history',JSON.stringify(state.history.slice(0,50)));
-  showToast('Exported! Import via GTM → Admin → Import','success');
+  renderHistory();
+  showToast('Single tag export downloaded','success');
 }
 
 function copyJSON(){
@@ -1127,15 +1344,17 @@ function addSite(){
   const id=document.getElementById('newSiteId').value.trim();
   const type=document.getElementById('newSiteType').value;
   const events=document.getElementById('newSiteEvents').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const url=document.getElementById('newSiteUrl').value.trim();
+  const description=document.getElementById('newSiteDescription').value.trim();
   if(!name||!id){ showToast('Name and Container ID required','error'); return; }
-  state.sites.push({id:Date.now(),name,containerId:id,type,events,tagCount:0});
-  localStorage.setItem('gtm_sites',JSON.stringify(state.sites));
-  populateSiteDropdown();
-  renderSites();
+  state.sites.push({id:Date.now(),name,containerId:id,type,events,url,description,tags:[],triggers:[],variables:[]});
+  persistSites();
   toggleAddSite();
   document.getElementById('newSiteName').value='';
   document.getElementById('newSiteId').value='';
   document.getElementById('newSiteEvents').value='';
+  document.getElementById('newSiteUrl').value='';
+  document.getElementById('newSiteDescription').value='';
   showToast('Site added','success');
 }
 
@@ -1153,7 +1372,9 @@ function renderSites(){
       <div class="site-type-badge ${typeCls[s.type]||'type-simple'}">${typeLabel[s.type]||s.type}</div>
       <div class="site-name">${s.name}</div>
       <div class="site-id">${s.containerId}</div>
+      ${s.url?`<div class="site-tags-count">${s.url}</div>`:''}
       ${s.events?.length?`<div class="site-tags-count">DL Events: ${s.events.join(', ')}</div>`:''}
+      <div class="site-tags-count">Saved: ${(s.tags?.length||0)} tags · ${(s.triggers?.length||0)} triggers · ${(s.variables?.length||0)} variables</div>
       <div style="display:flex;justify-content:flex-end;margin-top:12px">
         <button class="btn btn-danger" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();removeSite(${s.id})">Remove</button>
       </div>
@@ -1162,30 +1383,34 @@ function renderSites(){
 }
 
 function selectSite(id){
-  state.activeSite=id;
-  document.getElementById('activeSite').value=id;
+  state.activeSite=String(id);
+  document.getElementById('activeSite').value=String(id);
   renderSites();
+  updateCountsBar();
   showToast('Site selected','success');
 }
 
 function removeSite(id){
-  state.sites=state.sites.filter(s=>s.id!==id);
+  state.sites=state.sites.filter(s=>String(s.id)!==String(id));
   localStorage.setItem('gtm_sites',JSON.stringify(state.sites));
-  if(state.activeSite===id){ state.activeSite=''; document.getElementById('activeSite').value=''; }
+  if(String(state.activeSite)===String(id)){ state.activeSite=''; document.getElementById('activeSite').value=''; }
   populateSiteDropdown();
   renderSites();
+  updateCountsBar();
 }
 
 function populateSiteDropdown(){
   const sel=document.getElementById('activeSite');
-  const cur=sel.value;
+  const cur=String(state.activeSite || sel.value || '');
   sel.innerHTML='<option value="">— select site —</option>'+
     state.sites.map(s=>`<option value="${s.id}">${s.name} (${s.containerId})</option>`).join('');
   if(cur) sel.value=cur;
 }
 
 function onSiteChange(){
-  state.activeSite=document.getElementById('activeSite').value;
+  state.activeSite=String(document.getElementById('activeSite').value);
+  updateCountsBar();
+  renderSites();
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────────────────────
@@ -1202,7 +1427,7 @@ function renderHistory(){
       <span class="history-icon">${icons[h.type]||'🏷'}</span>
       <div class="history-info">
         <div class="history-name">${h.name}</div>
-        <div class="history-meta">${h.type} · ${h.time}${h.site?' · Site #'+h.site:''}</div>
+        <div class="history-meta">${h.type} · ${h.time}${h.site ? ' · ' + (state.sites.find(s=>String(s.id)===String(h.site))?.name || ('Site #'+h.site)) : ''}</div>
       </div>
       <div class="history-actions">
         <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="redownload(${h.id})">Re-export</button>
