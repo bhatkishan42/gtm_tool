@@ -421,6 +421,7 @@ header{
     <select class="site-selector" id="activeSite" onchange="onSiteChange()">
       <option value="">— select site —</option>
     </select>
+    <button class="btn btn-ghost" onclick="exportBundleJSON()">⬇ Extract All</button>
     <button class="btn btn-primary" onclick="exportJSON()">⬇ Export JSON</button>
   </div>
 </header>
@@ -432,7 +433,12 @@ header{
     <div class="sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">Tag Templates</div>
+        <button class="add-param-btn" style="margin-bottom:10px" onclick="openTemplateBuilder()">+ Add Template</button>
         <div id="templateList"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">SOP Bundle</div>
+        <div id="bundleQuickSummary" style="font-size:11px;color:var(--dim);line-height:1.8">No items added yet.</div>
       </div>
     </div>
 
@@ -514,9 +520,7 @@ header{
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── DATA ───────────────────────────────────────────────────────────────────
-
-const TEMPLATES = [
+const DEFAULT_TEMPLATES = [
   {
     id:'ga4_event',
     name:'GA4 Event',
@@ -525,13 +529,14 @@ const TEMPLATES = [
     badge:'badge-ga4',
     icon:'📊',
     params:[
-      {key:'measurement_id',label:'Measurement ID',value:'G-XXXXXXXXXX',type:'text',required:true},
-      {key:'event_name',label:'Event Name',value:'',type:'text',required:true},
+      {key:'measurement_id',value:'G-XXXXXXXXXX',vtype:'text'},
+      {key:'event_name',value:'',vtype:'text'},
     ],
     eventParams:[
       {key:'page_location',value:'{{Page URL}}'},
       {key:'page_title',value:'{{Page Title}}'},
-    ]
+    ],
+    variables:[]
   },
   {
     id:'ga4_config',
@@ -541,10 +546,11 @@ const TEMPLATES = [
     badge:'badge-ga4',
     icon:'⚙️',
     params:[
-      {key:'measurement_id',label:'Measurement ID',value:'G-XXXXXXXXXX',type:'text',required:true},
-      {key:'send_page_view',label:'Send Page View',value:'true',type:'select',options:['true','false'],required:false},
+      {key:'measurement_id',value:'G-XXXXXXXXXX',vtype:'text'},
+      {key:'send_page_view',value:'true',vtype:'boolean'},
     ],
-    eventParams:[]
+    eventParams:[],
+    variables:[]
   },
   {
     id:'meta_pixel',
@@ -554,15 +560,16 @@ const TEMPLATES = [
     badge:'badge-meta',
     icon:'📘',
     params:[
-      {key:'pixel_id',label:'Pixel ID',value:'',type:'text',required:true},
-      {key:'event_type',label:'Event Type',value:'PageView',type:'select',options:['PageView','ViewContent','AddToCart','InitiateCheckout','Purchase','Lead','CompleteRegistration','Search','CustomEvent'],required:true},
+      {key:'pixel_id',value:'',vtype:'text'},
+      {key:'event_type',value:'PageView',vtype:'text'},
     ],
     eventParams:[
       {key:'content_name',value:''},
       {key:'content_ids',value:''},
       {key:'value',value:''},
       {key:'currency',value:'USD'},
-    ]
+    ],
+    variables:[]
   },
   {
     id:'gads_conversion',
@@ -572,26 +579,13 @@ const TEMPLATES = [
     badge:'badge-gads',
     icon:'🎯',
     params:[
-      {key:'conversion_id',label:'Conversion ID',value:'AW-XXXXXXXXX',type:'text',required:true},
-      {key:'conversion_label',label:'Conversion Label',value:'',type:'text',required:true},
-      {key:'conversion_value',label:'Conversion Value',value:'',type:'text',required:false},
-      {key:'currency_code',label:'Currency',value:'USD',type:'text',required:false},
+      {key:'conversion_id',value:'AW-XXXXXXXXX',vtype:'text'},
+      {key:'conversion_label',value:'',vtype:'text'},
+      {key:'conversion_value',value:'',vtype:'text'},
+      {key:'currency_code',value:'USD',vtype:'text'},
     ],
-    eventParams:[]
-  },
-  {
-    id:'gads_remarketing',
-    name:'Google Ads Remarketing',
-    desc:'Audience remarketing',
-    type:'GADS',
-    badge:'badge-gads',
-    icon:'🔁',
-    params:[
-      {key:'conversion_id',label:'Conversion ID',value:'AW-XXXXXXXXX',type:'text',required:true},
-      {key:'ecomm_prodid',label:'Product ID',value:'',type:'text',required:false},
-      {key:'ecomm_pagetype',label:'Page Type',value:'',type:'select',options:['home','searchresults','category','product','cart','purchase','other'],required:false},
-    ],
-    eventParams:[]
+    eventParams:[],
+    variables:[]
   },
   {
     id:'custom_html',
@@ -599,11 +593,12 @@ const TEMPLATES = [
     desc:'Raw JS / third-party scripts',
     type:'HTML',
     badge:'badge-html',
-    icon:'</> ',
+    icon:'</>',
     params:[],
     eventParams:[],
+    variables:[],
     hasHTML:true
-  },
+  }
 ];
 
 const TRIGGER_TYPES = [
@@ -618,31 +613,33 @@ const TRIGGER_TYPES = [
   {id:'history',label:'History Change',icon:'🔀'},
   {id:'timer',label:'Timer',icon:'⏱'},
 ];
-
 const CONDITION_VARS = ['Page URL','Page Path','Page Hostname','Page Title','Referrer','Click Text','Click ID','Click Class','Click URL','Form ID','Form Class','Event Name','Custom Variable'];
 const CONDITION_OPS = ['contains','equals','matches RegEx','starts with','ends with','does not contain','does not equal'];
 
 let state = {
+  templates: [],
   activeTemplate: null,
   tagName: '',
   params: [],
   eventParams: [],
+  variables: [],
   htmlCode: '',
   triggers: [],
   sites: JSON.parse(localStorage.getItem('gtm_sites')||'[]'),
   history: JSON.parse(localStorage.getItem('gtm_history')||'[]'),
   activeSite: '',
+  bundleItems: JSON.parse(localStorage.getItem('gtm_bundle_items')||'[]'),
 };
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
 function init(){
+  state.templates = [...DEFAULT_TEMPLATES, ...JSON.parse(localStorage.getItem('gtm_custom_templates')||'[]')];
   renderTemplates();
   renderSites();
   renderHistory();
   populateSiteDropdown();
+  refreshBundleSummary();
 }
 
-// ─── PAGES ───────────────────────────────────────────────────────────────────
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
@@ -652,23 +649,24 @@ function showPage(id){
   if(id==='history') renderHistory();
 }
 
-// ─── TEMPLATES ───────────────────────────────────────────────────────────────
 function renderTemplates(){
   const list = document.getElementById('templateList');
-  list.innerHTML = TEMPLATES.map(t=>`
+  list.innerHTML = state.templates.map(t=>`
     <div class="template-item ${state.activeTemplate===t.id?'active':''}" onclick="selectTemplate('${t.id}')">
-      <div class="tag-type-badge ${t.badge}">${t.type}</div>
-      <div class="t-name">${t.icon} ${t.name}</div>
-      <div class="t-desc">${t.desc}</div>
+      <div class="tag-type-badge ${t.badge||'badge-html'}">${t.type||'CUSTOM'}</div>
+      <div class="t-name">${t.icon||'🏷'} ${t.name}</div>
+      <div class="t-desc">${t.desc||'No description'}</div>
     </div>
   `).join('');
 }
 
 function selectTemplate(id){
-  const tmpl = TEMPLATES.find(t=>t.id===id);
+  const tmpl = state.templates.find(t=>t.id===id);
+  if(!tmpl) return;
   state.activeTemplate = id;
-  state.params = tmpl.params.map(p=>({...p,value:p.value||''}));
+  state.params = (tmpl.params||[]).map(p=>({...p,value:p.value||'',vtype:p.vtype||'text'}));
   state.eventParams = (tmpl.eventParams||[]).map(p=>({...p}));
+  state.variables = (tmpl.variables||[]).map(v=>({...v}));
   state.htmlCode = '';
   state.triggers = [];
   state.tagName = tmpl.name + ' - ';
@@ -677,560 +675,250 @@ function selectTemplate(id){
   updatePreview();
 }
 
-// ─── FORM ────────────────────────────────────────────────────────────────────
 function renderForm(tmpl){
   const f = document.getElementById('mainForm');
   f.innerHTML = `
     <div class="form-header">
-      <div class="form-title">${tmpl.icon} ${tmpl.name}</div>
-      <div class="form-subtitle">Fill in tag configuration · all fields are customisable</div>
-    </div>
-
-    <!-- TAG NAME -->
-    <div class="form-section" id="sec-name">
-      <div class="form-section-header" onclick="toggleSection('sec-name')">
-        <div class="section-title-row">
-          <span class="section-icon">🏷</span>
-          <span class="section-name">Tag Name & Metadata</span>
-        </div>
-        <span class="collapse-arrow">▾</span>
-      </div>
-      <div class="form-section-body">
-        <div class="field-row cols-2">
-          <div class="field">
-            <label>Tag Name *</label>
-            <input id="tagName" value="${state.tagName}" oninput="state.tagName=this.value;updatePreview()" placeholder="e.g. GA4 - Purchase Event"/>
-          </div>
-          <div class="field">
-            <label>Firing Priority</label>
-            <input id="tagPriority" value="0" type="number" oninput="updatePreview()" placeholder="0"/>
-          </div>
-        </div>
-        <div class="field">
-          <label>Notes / Description</label>
-          <textarea id="tagNotes" placeholder="Optional notes for your team..." oninput="updatePreview()"></textarea>
-        </div>
+      <div class="form-title">${tmpl.icon||'🏷'} ${tmpl.name}</div>
+      <div class="form-subtitle">Template-driven SOP builder · add all tags/triggers/variables into one combined extract</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="addCurrentToBundle()">+ Add Current Config To SOP Bundle</button>
+        <button class="btn btn-ghost" onclick="saveAsTemplate()">Save as Template</button>
       </div>
     </div>
 
-    <!-- TAG PARAMS -->
-    <div class="form-section" id="sec-params">
-      <div class="form-section-header" onclick="toggleSection('sec-params')">
-        <div class="section-title-row">
-          <span class="section-icon">⚙️</span>
-          <span class="section-name">Tag Parameters</span>
-          <span class="section-tag">required config</span>
-        </div>
-        <span class="collapse-arrow">▾</span>
-      </div>
-      <div class="form-section-body">
-        <div id="paramRows"></div>
-        <button class="add-param-btn" onclick="addParam()">+ Add Parameter</button>
-      </div>
-    </div>
+    <div class="form-section" id="sec-name"><div class="form-section-header" onclick="toggleSection('sec-name')"><div class="section-title-row"><span class="section-icon">🏷</span><span class="section-name">Tag Name & Metadata</span></div><span class="collapse-arrow">▾</span></div><div class="form-section-body"><div class="field-row cols-2"><div class="field"><label>Tag Name *</label><input id="tagName" value="${state.tagName}" oninput="state.tagName=this.value;updatePreview()"/></div><div class="field"><label>Firing Priority</label><input id="tagPriority" value="0" type="number" oninput="updatePreview()"/></div></div><div class="field"><label>Notes / SOP Context</label><textarea id="tagNotes" oninput="updatePreview()" placeholder="Explain when teammates should use this template."></textarea></div></div></div>
 
-    ${tmpl.hasHTML?`
-    <!-- HTML CODE -->
-    <div class="form-section" id="sec-html">
-      <div class="form-section-header" onclick="toggleSection('sec-html')">
-        <div class="section-title-row">
-          <span class="section-icon">&lt;/&gt;</span>
-          <span class="section-name">HTML / Script Code</span>
-        </div>
-        <span class="collapse-arrow">▾</span>
-      </div>
-      <div class="form-section-body">
-        <div class="field">
-          <label>HTML Code</label>
-          <textarea id="htmlCode" style="min-height:140px;font-size:11px" placeholder="&lt;script&gt;&#10;  // Your custom code here&#10;&lt;/script&gt;" oninput="state.htmlCode=this.value;updatePreview()"></textarea>
-        </div>
-      </div>
-    </div>`:''}
+    <div class="form-section" id="sec-params"><div class="form-section-header" onclick="toggleSection('sec-params')"><div class="section-title-row"><span class="section-icon">⚙️</span><span class="section-name">Tag Parameters</span></div><span class="collapse-arrow">▾</span></div><div class="form-section-body"><div id="paramRows"></div><button class="add-param-btn" onclick="addParam()">+ Add Parameter</button></div></div>
 
-    ${tmpl.eventParams&&tmpl.eventParams.length>0||!tmpl.hasHTML?`
-    <!-- EVENT PARAMS -->
-    <div class="form-section" id="sec-eparams">
-      <div class="form-section-header" onclick="toggleSection('sec-eparams')">
-        <div class="section-title-row">
-          <span class="section-icon">📦</span>
-          <span class="section-name">Event Parameters / Custom Data</span>
-          <span class="section-tag">optional</span>
-        </div>
-        <span class="collapse-arrow">▾</span>
-      </div>
-      <div class="form-section-body">
-        <div id="eventParamRows"></div>
-        <button class="add-param-btn" onclick="addEventParam()">+ Add Event Parameter</button>
-      </div>
-    </div>`:''}
+    <div class="form-section" id="sec-vars"><div class="form-section-header" onclick="toggleSection('sec-vars')"><div class="section-title-row"><span class="section-icon">🧩</span><span class="section-name">Variables</span><span class="section-tag">included in combined extract</span></div><span class="collapse-arrow">▾</span></div><div class="form-section-body"><div id="variableRows"></div><button class="add-param-btn" onclick="addVariable()">+ Add Variable</button></div></div>
 
-    <!-- TRIGGERS -->
-    <div class="form-section" id="sec-triggers">
-      <div class="form-section-header" onclick="toggleSection('sec-triggers')">
-        <div class="section-title-row">
-          <span class="section-icon">⚡</span>
-          <span class="section-name">Firing Triggers</span>
-          <span class="section-tag">when to fire</span>
-        </div>
-        <span class="collapse-arrow">▾</span>
-      </div>
-      <div class="form-section-body">
-        <div class="sidebar-label" style="margin-bottom:8px">Quick Add Trigger Type</div>
-        <div class="trigger-types">
-          ${TRIGGER_TYPES.map(t=>`<button class="trigger-type-btn" onclick="addTrigger('${t.id}','${t.label}')">${t.icon} ${t.label}</button>`).join('')}
-        </div>
-        <div id="triggerBlocks"></div>
-      </div>
-    </div>
+    ${tmpl.hasHTML?`<div class="form-section" id="sec-html"><div class="form-section-header" onclick="toggleSection('sec-html')"><div class="section-title-row"><span class="section-icon">&lt;/&gt;</span><span class="section-name">HTML / Script Code</span></div><span class="collapse-arrow">▾</span></div><div class="form-section-body"><div class="field"><label>HTML Code</label><textarea id="htmlCode" style="min-height:140px;font-size:11px" placeholder="<script>\\n// code\\n<\\/script>" oninput="state.htmlCode=this.value;updatePreview()"></textarea></div></div></div>`:''}
+
+    <div class="form-section" id="sec-eparams"><div class="form-section-header" onclick="toggleSection('sec-eparams')"><div class="section-title-row"><span class="section-icon">📦</span><span class="section-name">Event Parameters</span></div><span class="collapse-arrow">▾</span></div><div class="form-section-body"><div id="eventParamRows"></div><button class="add-param-btn" onclick="addEventParam()">+ Add Event Parameter</button></div></div>
+
+    <div class="form-section" id="sec-triggers"><div class="form-section-header" onclick="toggleSection('sec-triggers')"><div class="section-title-row"><span class="section-icon">⚡</span><span class="section-name">Firing Triggers</span></div><span class="collapse-arrow">▾</span></div><div class="form-section-body"><div class="sidebar-label" style="margin-bottom:8px">Quick Add Trigger Type</div><div class="trigger-types">${TRIGGER_TYPES.map(t=>`<button class="trigger-type-btn" onclick="addTrigger('${t.id}','${t.label}')">${t.icon} ${t.label}</button>`).join('')}</div><div id="triggerBlocks"></div></div></div>
   `;
   renderParamRows();
+  renderVariableRows();
   renderEventParamRows();
   renderTriggerBlocks();
 }
 
-// ─── PARAMS ──────────────────────────────────────────────────────────────────
 function renderParamRows(){
-  const c = document.getElementById('paramRows');
-  if(!c) return;
-  if(state.params.length===0){
-    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No parameters yet. Add one below.</div>';
-    return;
-  }
-  c.innerHTML = `
-    <div class="params-head cols-4"><span>Key / Name</span><span>Value</span><span>Type</span><span></span></div>
-    ${state.params.map((p,i)=>`
-      <div class="param-row cols-4">
-        <input class="param-input" value="${p.key}" oninput="state.params[${i}].key=this.value;updatePreview()" placeholder="param_key"/>
-        <input class="param-input" value="${p.value}" oninput="state.params[${i}].value=this.value;updatePreview()" placeholder="value or {{Variable}}"/>
-        <select class="param-select" onchange="state.params[${i}].vtype=this.value;updatePreview()">
-          <option ${(p.vtype||'text')==='text'?'selected':''}>text</option>
-          <option ${p.vtype==='template'?'selected':''}>template</option>
-          <option ${p.vtype==='boolean'?'selected':''}>boolean</option>
-          <option ${p.vtype==='integer'?'selected':''}>integer</option>
-        </select>
-        <button class="remove-btn" onclick="removeParam(${i})">×</button>
-      </div>
-    `).join('')}
-  `;
+  const c = document.getElementById('paramRows'); if(!c) return;
+  if(!state.params.length){ c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No parameters yet.</div>'; return; }
+  c.innerHTML = `<div class="params-head cols-4"><span>Key / Name</span><span>Value</span><span>Type</span><span></span></div>${state.params.map((p,i)=>`<div class="param-row cols-4"><input class="param-input" value="${p.key||''}" oninput="state.params[${i}].key=this.value;updatePreview()"/><input class="param-input" value="${p.value||''}" oninput="state.params[${i}].value=this.value;updatePreview()"/><select class="param-select" onchange="state.params[${i}].vtype=this.value;updatePreview()"><option ${(p.vtype||'text')==='text'?'selected':''}>text</option><option ${p.vtype==='template'?'selected':''}>template</option><option ${p.vtype==='boolean'?'selected':''}>boolean</option><option ${p.vtype==='integer'?'selected':''}>integer</option></select><button class="remove-btn" onclick="removeParam(${i})">×</button></div>`).join('')}`;
 }
+function addParam(){ state.params.push({key:'',value:'',vtype:'text'}); renderParamRows(); updatePreview(); }
+function removeParam(i){ state.params.splice(i,1); renderParamRows(); updatePreview(); }
 
-function addParam(){
-  state.params.push({key:'',value:'',vtype:'text',required:false});
-  renderParamRows();
-  updatePreview();
+function renderVariableRows(){
+  const c = document.getElementById('variableRows'); if(!c) return;
+  if(!state.variables.length){ c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No variables yet.</div>'; return; }
+  c.innerHTML = `<div class="params-head cols-4"><span>Variable Name</span><span>Value / DL Key</span><span>Type</span><span></span></div>${state.variables.map((v,i)=>`<div class="param-row cols-4"><input class="param-input" value="${v.name||''}" oninput="state.variables[${i}].name=this.value;updatePreview()" placeholder="DLV - page_type"/><input class="param-input" value="${v.value||''}" oninput="state.variables[${i}].value=this.value;updatePreview()" placeholder="page_type"/><select class="param-select" onchange="state.variables[${i}].kind=this.value;updatePreview()"><option ${(v.kind||'datalayer')==='datalayer'?'selected':''} value="datalayer">Data Layer</option><option ${v.kind==='constant'?'selected':''} value="constant">Constant</option><option ${v.kind==='js'?'selected':''} value="js">Custom JS</option></select><button class="remove-btn" onclick="removeVariable(${i})">×</button></div>`).join('')}`;
 }
-function removeParam(i){
-  state.params.splice(i,1);
-  renderParamRows();
-  updatePreview();
-}
+function addVariable(){ state.variables.push({name:'',value:'',kind:'datalayer'}); renderVariableRows(); updatePreview(); }
+function removeVariable(i){ state.variables.splice(i,1); renderVariableRows(); updatePreview(); }
 
-// ─── EVENT PARAMS ────────────────────────────────────────────────────────────
 function renderEventParamRows(){
-  const c = document.getElementById('eventParamRows');
-  if(!c) return;
-  if(state.eventParams.length===0){
-    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No event parameters yet.</div>';
-    return;
-  }
-  c.innerHTML = `
-    <div class="params-head cols-3"><span>Parameter Name</span><span>Value</span><span></span></div>
-    ${state.eventParams.map((p,i)=>`
-      <div class="param-row cols-3">
-        <input class="param-input" value="${p.key}" oninput="state.eventParams[${i}].key=this.value;updatePreview()" placeholder="param_name"/>
-        <input class="param-input" value="${p.value}" oninput="state.eventParams[${i}].value=this.value;updatePreview()" placeholder="value or {{DL Variable}}"/>
-        <button class="remove-btn" onclick="removeEventParam(${i})">×</button>
-      </div>
-    `).join('')}
-  `;
+  const c = document.getElementById('eventParamRows'); if(!c) return;
+  if(!state.eventParams.length){ c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No event parameters yet.</div>'; return; }
+  c.innerHTML = `<div class="params-head cols-3"><span>Parameter Name</span><span>Value</span><span></span></div>${state.eventParams.map((p,i)=>`<div class="param-row cols-3"><input class="param-input" value="${p.key||''}" oninput="state.eventParams[${i}].key=this.value;updatePreview()"/><input class="param-input" value="${p.value||''}" oninput="state.eventParams[${i}].value=this.value;updatePreview()"/><button class="remove-btn" onclick="removeEventParam(${i})">×</button></div>`).join('')}`;
 }
+function addEventParam(){ state.eventParams.push({key:'',value:''}); renderEventParamRows(); updatePreview(); }
+function removeEventParam(i){ state.eventParams.splice(i,1); renderEventParamRows(); updatePreview(); }
 
-function addEventParam(){
-  state.eventParams.push({key:'',value:''});
-  renderEventParamRows();
-  updatePreview();
-}
-function removeEventParam(i){
-  state.eventParams.splice(i,1);
-  renderEventParamRows();
-  updatePreview();
-}
-
-// ─── TRIGGERS ────────────────────────────────────────────────────────────────
-function addTrigger(typeId, label){
-  state.triggers.push({
-    id: Date.now(),
-    type: typeId,
-    label: label,
-    conditions:[{variable:'Page URL',operator:'contains',value:''}]
-  });
-  renderTriggerBlocks();
-  updatePreview();
-}
-
-function removeTrigger(id){
-  state.triggers = state.triggers.filter(t=>t.id!==id);
-  renderTriggerBlocks();
-  updatePreview();
-}
-
-function addCondition(triggerId){
-  const t = state.triggers.find(t=>t.id===triggerId);
-  if(t) t.conditions.push({variable:'Page URL',operator:'contains',value:''});
-  renderTriggerBlocks();
-  updatePreview();
-}
-
-function removeCondition(triggerId, ci){
-  const t = state.triggers.find(t=>t.id===triggerId);
-  if(t) t.conditions.splice(ci,1);
-  renderTriggerBlocks();
-  updatePreview();
-}
-
-function updateCondition(triggerId, ci, field, val){
-  const t = state.triggers.find(t=>t.id===triggerId);
-  if(t) t.conditions[ci][field]=val;
-  updatePreview();
-}
+function addTrigger(typeId, label){ state.triggers.push({id: Date.now()+Math.floor(Math.random()*99),type: typeId,label,conditions:[{variable:'Page URL',operator:'contains',value:''}],logic:'AND'}); renderTriggerBlocks(); updatePreview(); }
+function removeTrigger(id){ state.triggers = state.triggers.filter(t=>t.id!==id); renderTriggerBlocks(); updatePreview(); }
+function addCondition(triggerId){ const t=state.triggers.find(t=>t.id===triggerId); if(t) t.conditions.push({variable:'Page URL',operator:'contains',value:''}); renderTriggerBlocks(); updatePreview(); }
+function removeCondition(triggerId, ci){ const t=state.triggers.find(t=>t.id===triggerId); if(t) t.conditions.splice(ci,1); renderTriggerBlocks(); updatePreview(); }
+function updateCondition(triggerId, ci, field, val){ const t=state.triggers.find(t=>t.id===triggerId); if(t) t.conditions[ci][field]=val; updatePreview(); }
+function updateTriggerEvent(id,val){ const t=state.triggers.find(t=>t.id===id); if(t) t.eventName=val; updatePreview(); }
+function toggleLogic(id){ const t=state.triggers.find(t=>t.id===id); if(t) t.logic=t.logic==='AND'?'OR':'AND'; renderTriggerBlocks(); updatePreview(); }
 
 function renderTriggerBlocks(){
-  const c = document.getElementById('triggerBlocks');
-  if(!c) return;
-  if(state.triggers.length===0){
-    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-top:10px">No triggers added. Pick a type above.</div>';
-    return;
-  }
-  c.innerHTML = state.triggers.map(t=>`
-    <div class="trigger-block">
-      <div class="trigger-block-header">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="trigger-block-title">${TRIGGER_TYPES.find(x=>x.id===t.type)?.icon||'⚡'} ${t.label}</span>
-          ${t.type==='custom_event'?`<input class="param-input" style="width:160px" placeholder="event name" oninput="updateTriggerEvent(${t.id},this.value)" value="${t.eventName||''}"/>`:''}
-        </div>
-        <button class="remove-btn" onclick="removeTrigger(${t.id})">×</button>
-      </div>
-      ${['pageview','domready','windowload','click_all','click_link','form_submit','custom_event','history','timer','scroll'].includes(t.type)?`
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
-          Conditions <span class="logic-badge" onclick="toggleLogic(${t.id})">${t.logic||'AND'}</span>
-        </div>
-        ${t.conditions.map((c,ci)=>`
-          <div class="condition-row">
-            <select class="param-select" onchange="updateCondition(${t.id},${ci},'variable',this.value)">
-              ${CONDITION_VARS.map(v=>`<option ${c.variable===v?'selected':''}>${v}</option>`).join('')}
-            </select>
-            <select class="param-select" onchange="updateCondition(${t.id},${ci},'operator',this.value)">
-              ${CONDITION_OPS.map(o=>`<option ${c.operator===o?'selected':''}>${o}</option>`).join('')}
-            </select>
-            <input class="param-input" value="${c.value}" placeholder="value" oninput="updateCondition(${t.id},${ci},'value',this.value)"/>
-            <button class="remove-btn" onclick="removeCondition(${t.id},${ci})">×</button>
-          </div>
-        `).join('')}
-        <button class="add-condition-btn" onclick="addCondition(${t.id})">+ condition</button>
-      </div>`:''}
-    </div>
-  `).join('');
+  const c = document.getElementById('triggerBlocks'); if(!c) return;
+  if(!state.triggers.length){ c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-top:10px">No triggers added.</div>'; return; }
+  c.innerHTML = state.triggers.map(t=>`<div class="trigger-block"><div class="trigger-block-header"><div style="display:flex;align-items:center;gap:8px"><span class="trigger-block-title">${TRIGGER_TYPES.find(x=>x.id===t.type)?.icon||'⚡'} ${t.label}</span>${t.type==='custom_event'?`<input class="param-input" style="width:160px" placeholder="event name" oninput="updateTriggerEvent(${t.id},this.value)" value="${t.eventName||''}"/>`:''}</div><button class="remove-btn" onclick="removeTrigger(${t.id})">×</button></div><div style="margin-bottom:8px"><div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Conditions <span class="logic-badge" onclick="toggleLogic(${t.id})">${t.logic||'AND'}</span></div>${t.conditions.map((cn,ci)=>`<div class="condition-row"><select class="param-select" onchange="updateCondition(${t.id},${ci},'variable',this.value)">${CONDITION_VARS.map(v=>`<option ${cn.variable===v?'selected':''}>${v}</option>`).join('')}</select><select class="param-select" onchange="updateCondition(${t.id},${ci},'operator',this.value)">${CONDITION_OPS.map(o=>`<option ${cn.operator===o?'selected':''}>${o}</option>`).join('')}</select><input class="param-input" value="${cn.value||''}" oninput="updateCondition(${t.id},${ci},'value',this.value)"/><button class="remove-btn" onclick="removeCondition(${t.id},${ci})">×</button></div>`).join('')}<button class="add-condition-btn" onclick="addCondition(${t.id})">+ condition</button></div></div>`).join('');
 }
 
-function toggleLogic(id){
-  const t = state.triggers.find(t=>t.id===id);
-  if(t) t.logic = t.logic==='AND'?'OR':'AND';
-  renderTriggerBlocks();
-  updatePreview();
-}
-
-function updateTriggerEvent(id,val){
-  const t = state.triggers.find(t=>t.id===id);
-  if(t) t.eventName=val;
-  updatePreview();
-}
-
-// ─── SECTION TOGGLE ──────────────────────────────────────────────────────────
-function toggleSection(id){
-  const sec = document.getElementById(id);
-  if(sec) sec.classList.toggle('collapsed');
-}
-
-// ─── PREVIEW ─────────────────────────────────────────────────────────────────
-function buildGTMJson(){
-  if(!state.activeTemplate) return null;
-  const tmpl = TEMPLATES.find(t=>t.id===state.activeTemplate);
-  const tagName = (document.getElementById('tagName')?.value||state.tagName||tmpl.name).trim();
-  const priority = parseInt(document.getElementById('tagPriority')?.value||'0');
-
-  // Build tag config
-  const tagParams = {};
-  state.params.forEach(p=>{ if(p.key) tagParams[p.key] = p.value; });
-
-  const eventParamsArr = state.eventParams
-    .filter(p=>p.key)
-    .map(p=>({map:[{type:'template',key:'name',value:p.key},{type:'template',key:'value',value:p.value}]}));
-
-  // Determine GTM tag type string
-  const typeMap = {
-    ga4_event:'googtag',
-    ga4_config:'googtag',
-    meta_pixel:'html',
-    gads_conversion:'awct',
-    gads_remarketing:'sp',
-    custom_html:'html'
-  };
-
-  let tagConfig = {
-    type: typeMap[state.activeTemplate]||'html',
-    name: tagName,
-    liveId: 'live',
-    priority: {type:'integer',value:priority.toString()},
-    firingTriggerId:[],
-    tagFiringOption:'oncePerEvent',
-    parameter: buildParameters(tmpl)
-  };
-
-  // Build triggers
-  const triggersConfig = state.triggers.map((t,i)=>({
-    type: mapTriggerType(t.type),
-    name: `${tagName} - ${t.label}`,
-    filter: t.conditions.filter(c=>c.value).map(c=>({
-      type:'contains',
-      parameter:[
-        {type:'template',key:'arg0',value:`{{${c.variable}}}`},
-        {type:'template',key:'arg1',value:c.value}
-      ]
-    })),
-    customEventFilter: t.type==='custom_event' && t.eventName ? [{
-      type:'equals',
-      parameter:[
-        {type:'template',key:'arg0',value:'{{_event}}'},
-        {type:'template',key:'arg1',value:t.eventName}
-      ]
-    }] : undefined
-  }));
-
-  const container = {
-    exportFormatVersion: 2,
-    exportTime: new Date().toISOString(),
-    containerVersion:{
-      description: document.getElementById('tagNotes')?.value||'',
-      tag:[tagConfig],
-      trigger: triggersConfig,
-      variable:[]
-    }
-  };
-
-  return container;
-}
-
-function buildParameters(tmpl){
-  const params = [];
-  state.params.forEach(p=>{
-    if(!p.key) return;
-    params.push({type:p.vtype||'template',key:p.key,value:p.value});
-  });
-  if(state.eventParams.length>0){
-    params.push({
-      type:'list',key:'eventParameters',
-      list: state.eventParams.filter(p=>p.key).map(p=>({
-        type:'map',
-        map:[
-          {type:'template',key:'name',value:p.key},
-          {type:'template',key:'value',value:p.value}
-        ]
-      }))
-    });
-  }
-  if(tmpl.hasHTML && state.htmlCode){
-    params.push({type:'template',key:'html',value:state.htmlCode});
-  }
-  return params;
-}
+function toggleSection(id){ const sec=document.getElementById(id); if(sec) sec.classList.toggle('collapsed'); }
 
 function mapTriggerType(t){
-  const m={pageview:'PAGEVIEW',domready:'DOM_READY',windowload:'WINDOW_LOAD',
-    click_all:'CLICK',click_link:'LINK_CLICK',form_submit:'FORM_SUBMISSION',
-    scroll:'SCROLL_DEPTH',custom_event:'CUSTOM_EVENT',history:'HISTORY_CHANGE',timer:'TIMER'};
+  const m={pageview:'PAGEVIEW',domready:'DOM_READY',windowload:'WINDOW_LOAD',click_all:'CLICK',click_link:'LINK_CLICK',form_submit:'FORM_SUBMISSION',scroll:'SCROLL_DEPTH',custom_event:'CUSTOM_EVENT',history:'HISTORY_CHANGE',timer:'TIMER'};
   return m[t]||'PAGEVIEW';
 }
 
+function buildParameters(tmpl){
+  const params=[];
+  state.params.forEach(p=>{ if(p.key) params.push({type:p.vtype||'template',key:p.key,value:p.value}); });
+  if(state.eventParams.some(p=>p.key)){
+    params.push({type:'list',key:'eventParameters',list: state.eventParams.filter(p=>p.key).map(p=>({type:'map',map:[{type:'template',key:'name',value:p.key},{type:'template',key:'value',value:p.value}]}))});
+  }
+  if(tmpl?.hasHTML && state.htmlCode) params.push({type:'template',key:'html',value:state.htmlCode});
+  return params;
+}
+
+function buildCurrentConfig(){
+  if(!state.activeTemplate) return null;
+  const tmpl = state.templates.find(t=>t.id===state.activeTemplate);
+  const tagName = (document.getElementById('tagName')?.value||state.tagName||tmpl.name).trim();
+  const priority = parseInt(document.getElementById('tagPriority')?.value||'0',10);
+  const notes = document.getElementById('tagNotes')?.value||'';
+  const tagConfig = {type: ({ga4_event:'googtag',ga4_config:'googtag',meta_pixel:'html',gads_conversion:'awct',gads_remarketing:'sp',custom_html:'html'})[state.activeTemplate]||'html',name:tagName,liveId:'live',priority:{type:'integer',value:String(isNaN(priority)?0:priority)},firingTriggerId:[],tagFiringOption:'oncePerEvent',parameter:buildParameters(tmpl)};
+  const triggersConfig = state.triggers.map(t=>({type: mapTriggerType(t.type),name:`${tagName} - ${t.label}`,filter:t.conditions.filter(c=>c.value).map(c=>({type:'contains',parameter:[{type:'template',key:'arg0',value:`{{${c.variable}}}`},{type:'template',key:'arg1',value:c.value}]})),customEventFilter:t.type==='custom_event'&&t.eventName?[{type:'equals',parameter:[{type:'template',key:'arg0',value:'{{_event}}'},{type:'template',key:'arg1',value:t.eventName}]}]:undefined}));
+  const variablesConfig = state.variables.filter(v=>v.name).map(v=>({name:v.name,type:v.kind==='constant'?'c':(v.kind==='js'?'jsm':'v'),parameter:[{type:'template',key:'name',value:v.name},{type:'template',key:'value',value:v.value||''}]}));
+  return {id:Date.now(),templateId:state.activeTemplate,templateName:tmpl.name,name:tagName,notes,tag:tagConfig,triggers:triggersConfig,variables:variablesConfig,site:state.activeSite};
+}
+
+function buildBundleJson(){
+  return {
+    exportFormatVersion: 2,
+    exportTime: new Date().toISOString(),
+    extractName: 'extract_all_tags_triggers_variables',
+    containerVersion:{
+      description:'Combined SOP extract generated from multiple templates.',
+      tag: state.bundleItems.map(x=>x.tag),
+      trigger: state.bundleItems.flatMap(x=>x.triggers||[]),
+      variable: state.bundleItems.flatMap(x=>x.variables||[])
+    },
+    sopItems: state.bundleItems.map(x=>({name:x.name,template:x.templateName,site:x.site||''}))
+  };
+}
+
 function updatePreview(){
-  const json = buildGTMJson();
   const body = document.getElementById('previewBody');
-  if(!json){ body.innerHTML='<div class="empty-state" style="padding:24px 12px"><span class="empty-icon" style="font-size:24px">👁</span>Select a template</div>'; return; }
-
-  const tagName = json.containerVersion.tag[0]?.name||'Unnamed';
-  const triggerCount = json.containerVersion.trigger.length;
-  const paramCount = json.containerVersion.tag[0]?.parameter?.length||0;
-
+  if(!state.activeTemplate){ body.innerHTML='<div class="empty-state" style="padding:24px 12px"><span class="empty-icon" style="font-size:24px">👁</span>Select a template</div>'; return; }
+  const current = buildCurrentConfig();
+  const bundle = buildBundleJson();
   body.innerHTML = `
     <div class="summary-card">
-      <div class="summary-row"><span class="summary-label">Tag Name</span><span class="summary-val">${tagName||'—'}</span></div>
-      <div class="summary-row"><span class="summary-label">Type</span><span class="summary-val">${json.containerVersion.tag[0]?.type||'—'}</span></div>
-      <div class="summary-row"><span class="summary-label">Parameters</span><span class="summary-val">${paramCount}</span></div>
-      <div class="summary-row"><span class="summary-label">Triggers</span><span class="summary-val">${triggerCount} trigger${triggerCount!==1?'s':''}</span></div>
-      <div class="summary-row">
-        <span class="summary-label">Status</span>
-        <span class="summary-val">
-          <span class="status-dot ${tagName&&triggerCount>0?'dot-green':'dot-orange'}"></span>
-          ${tagName&&triggerCount>0?'Ready to export':'Incomplete'}
-        </span>
-      </div>
+      <div class="summary-row"><span class="summary-label">Current Tag</span><span class="summary-val">${current?.name||'—'}</span></div>
+      <div class="summary-row"><span class="summary-label">Current Triggers</span><span class="summary-val">${current?.triggers?.length||0}</span></div>
+      <div class="summary-row"><span class="summary-label">Current Variables</span><span class="summary-val">${current?.variables?.length||0}</span></div>
+      <div class="summary-row"><span class="summary-label">Bundle Items</span><span class="summary-val">${state.bundleItems.length}</span></div>
+      <div class="summary-row"><span class="summary-label">Extract Status</span><span class="summary-val"><span class="status-dot ${state.bundleItems.length?'dot-green':'dot-orange'}"></span>${state.bundleItems.length?'Ready':'Add items'}</span></div>
     </div>
-    <div class="sidebar-label" style="margin-bottom:8px">JSON Output</div>
-    <div class="json-output">${syntaxHighlight(JSON.stringify(json,null,2))}</div>
-  `;
+    <div class="sidebar-label" style="margin-bottom:8px">Combined JSON Output</div>
+    <div class="json-output">${syntaxHighlight(JSON.stringify(bundle,null,2))}</div>`;
+  refreshBundleSummary();
+}
+
+function refreshBundleSummary(){
+  const el=document.getElementById('bundleQuickSummary');
+  if(!el) return;
+  if(!state.bundleItems.length){ el.innerHTML='No items added yet.'; return; }
+  const tagCount=state.bundleItems.length;
+  const triggerCount=state.bundleItems.reduce((s,i)=>s+(i.triggers?.length||0),0);
+  const varCount=state.bundleItems.reduce((s,i)=>s+(i.variables?.length||0),0);
+  el.innerHTML=`<div><strong>${tagCount}</strong> tags</div><div><strong>${triggerCount}</strong> triggers</div><div><strong>${varCount}</strong> variables</div><div style="margin-top:8px"><button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="clearBundle()">Clear Bundle</button></div>`;
 }
 
 function syntaxHighlight(json){
   return json
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
     .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
       let cls='json-number';
-      if(/^"/.test(m)){ cls=/: $/.test(m.slice(-2))||/:$/.test(m)?'json-key':'json-string'; }
+      if(/^"/.test(m)) cls=/:$/.test(m)||/:\s$/.test(m)?'json-key':'json-string';
       else if(/true|false/.test(m)) cls='json-bool';
       return `<span class="${cls}">${m}</span>`;
     });
 }
 
-// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function addCurrentToBundle(){
+  const current = buildCurrentConfig();
+  if(!current){ showToast('Select a template first','error'); return; }
+  state.bundleItems.push(current);
+  localStorage.setItem('gtm_bundle_items', JSON.stringify(state.bundleItems));
+  updatePreview();
+  showToast('Added to SOP bundle','success');
+}
+
+function clearBundle(){
+  state.bundleItems=[];
+  localStorage.setItem('gtm_bundle_items','[]');
+  updatePreview();
+  showToast('Bundle cleared','success');
+}
+
 function exportJSON(){
-  const json = buildGTMJson();
-  if(!json){ showToast('Select a template first','error'); return; }
-  const tagName = json.containerVersion.tag[0]?.name||'gtm-tag';
-  const blob = new Blob([JSON.stringify(json,null,2)],{type:'application/json'});
+  const current = buildCurrentConfig();
+  if(!current){ showToast('Select a template first','error'); return; }
+  const out={exportFormatVersion:2,exportTime:new Date().toISOString(),containerVersion:{description:current.notes||'',tag:[current.tag],trigger:current.triggers,variable:current.variables}};
+  downloadJson(out, `${(current.name||'gtm_tag').replace(/\s+/g,'_')}_${Date.now()}.json`);
+  state.history.unshift({id:Date.now(),name:current.name,type:current.templateId,site:state.activeSite,time:new Date().toLocaleString(),json:out});
+  localStorage.setItem('gtm_history',JSON.stringify(state.history.slice(0,50)));
+  showToast('Single JSON exported','success');
+}
+
+function exportBundleJSON(){
+  if(!state.bundleItems.length){ showToast('Add at least one config to bundle','error'); return; }
+  const combined = buildBundleJson();
+  downloadJson(combined, 'extract_all_tags_triggers_variables.json');
+  state.history.unshift({id:Date.now(),name:'SOP Extract (All)',type:'bundle',site:state.activeSite,time:new Date().toLocaleString(),json:combined});
+  localStorage.setItem('gtm_history',JSON.stringify(state.history.slice(0,50)));
+  showToast('Combined extract exported','success');
+}
+
+function downloadJson(payload, filename){
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download=`${tagName.replace(/\s+/g,'_')}_${Date.now()}.json`;
-  a.click(); URL.revokeObjectURL(url);
-
-  // Save to history
-  state.history.unshift({id:Date.now(),name:tagName,type:state.activeTemplate,site:state.activeSite,time:new Date().toLocaleString(),json});
-  localStorage.setItem('gtm_history',JSON.stringify(state.history.slice(0,50)));
-  showToast('Exported! Import via GTM → Admin → Import','success');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function copyJSON(){
-  const json = buildGTMJson();
-  if(!json){ showToast('Nothing to copy','error'); return; }
+  const json = buildBundleJson();
   navigator.clipboard.writeText(JSON.stringify(json,null,2));
-  showToast('Copied to clipboard','success');
+  showToast('Combined extract copied','success');
 }
 
-// ─── SITES ───────────────────────────────────────────────────────────────────
+function openTemplateBuilder(){
+  const name = prompt('Template name');
+  if(!name) return;
+  const desc = prompt('Template description','Custom SOP template')||'Custom SOP template';
+  const type = (prompt('Template type label','CUSTOM')||'CUSTOM').toUpperCase();
+  const id = `custom_${Date.now()}`;
+  const newTemplate = {id,name,desc,type,badge:'badge-html',icon:'🧪',params:[],eventParams:[],variables:[]};
+  const custom = JSON.parse(localStorage.getItem('gtm_custom_templates')||'[]');
+  custom.push(newTemplate);
+  localStorage.setItem('gtm_custom_templates', JSON.stringify(custom));
+  state.templates=[...DEFAULT_TEMPLATES,...custom];
+  renderTemplates();
+  showToast('Template added. Select and customize it.','success');
+}
+
+function saveAsTemplate(){
+  const current=buildCurrentConfig();
+  if(!current){ showToast('Select template first','error'); return; }
+  const name = prompt('Save current config as template name', current.name+' Template');
+  if(!name) return;
+  const custom = JSON.parse(localStorage.getItem('gtm_custom_templates')||'[]');
+  custom.push({id:`custom_${Date.now()}`,name,desc:'Saved from builder',type:'CUSTOM',badge:'badge-html',icon:'🧪',params:state.params,eventParams:state.eventParams,variables:state.variables,hasHTML:!!state.htmlCode});
+  localStorage.setItem('gtm_custom_templates', JSON.stringify(custom));
+  state.templates=[...DEFAULT_TEMPLATES,...custom];
+  renderTemplates();
+  showToast('Template saved','success');
+}
+
 let addSiteOpen = false;
-function toggleAddSite(){
-  addSiteOpen=!addSiteOpen;
-  document.getElementById('addSiteForm').style.display=addSiteOpen?'block':'none';
-}
+function toggleAddSite(){ addSiteOpen=!addSiteOpen; document.getElementById('addSiteForm').style.display=addSiteOpen?'block':'none'; }
+function addSite(){ const name=document.getElementById('newSiteName').value.trim(); const id=document.getElementById('newSiteId').value.trim(); const type=document.getElementById('newSiteType').value; const events=document.getElementById('newSiteEvents').value.split(',').map(s=>s.trim()).filter(Boolean); if(!name||!id){ showToast('Name and Container ID required','error'); return; } state.sites.push({id:Date.now(),name,containerId:id,type,events,tagCount:0}); localStorage.setItem('gtm_sites',JSON.stringify(state.sites)); populateSiteDropdown(); renderSites(); toggleAddSite(); document.getElementById('newSiteName').value=''; document.getElementById('newSiteId').value=''; document.getElementById('newSiteEvents').value=''; showToast('Site added','success'); }
+function renderSites(){ const g=document.getElementById('sitesGrid'); if(!g) return; if(!state.sites.length){ g.innerHTML='<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🌐</span>No sites yet.</div>'; return; } const typeLabel={simple:'Simple',datalayer:'Data Layer',spa:'SPA'}; const typeCls={simple:'type-simple',datalayer:'type-datalayer',spa:'type-spa'}; g.innerHTML=state.sites.map(s=>`<div class="site-card ${state.activeSite==s.id?'selected':''}" onclick="selectSite(${s.id})"><div class="site-type-badge ${typeCls[s.type]||'type-simple'}">${typeLabel[s.type]||s.type}</div><div class="site-name">${s.name}</div><div class="site-id">${s.containerId}</div>${s.events?.length?`<div class="site-tags-count">DL Events: ${s.events.join(', ')}</div>`:''}<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-danger" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();removeSite(${s.id})">Remove</button></div></div>`).join(''); }
+function selectSite(id){ state.activeSite=id; document.getElementById('activeSite').value=id; renderSites(); showToast('Site selected','success'); }
+function removeSite(id){ state.sites=state.sites.filter(s=>s.id!==id); localStorage.setItem('gtm_sites',JSON.stringify(state.sites)); if(state.activeSite==id){ state.activeSite=''; document.getElementById('activeSite').value=''; } populateSiteDropdown(); renderSites(); }
+function populateSiteDropdown(){ const sel=document.getElementById('activeSite'); const cur=sel.value; sel.innerHTML='<option value="">— select site —</option>'+state.sites.map(s=>`<option value="${s.id}">${s.name} (${s.containerId})</option>`).join(''); if(cur) sel.value=cur; }
+function onSiteChange(){ state.activeSite=document.getElementById('activeSite').value; }
 
-function addSite(){
-  const name=document.getElementById('newSiteName').value.trim();
-  const id=document.getElementById('newSiteId').value.trim();
-  const type=document.getElementById('newSiteType').value;
-  const events=document.getElementById('newSiteEvents').value.split(',').map(s=>s.trim()).filter(Boolean);
-  if(!name||!id){ showToast('Name and Container ID required','error'); return; }
-  state.sites.push({id:Date.now(),name,containerId:id,type,events,tagCount:0});
-  localStorage.setItem('gtm_sites',JSON.stringify(state.sites));
-  populateSiteDropdown();
-  renderSites();
-  toggleAddSite();
-  document.getElementById('newSiteName').value='';
-  document.getElementById('newSiteId').value='';
-  document.getElementById('newSiteEvents').value='';
-  showToast('Site added','success');
-}
+function renderHistory(){ const list=document.getElementById('historyList'); if(!list) return; if(!state.history.length){ list.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>No exports yet</div>'; return; } const icons={ga4_event:'📊',ga4_config:'⚙️',meta_pixel:'📘',gads_conversion:'🎯',gads_remarketing:'🔁',custom_html:'</>',bundle:'🧱'}; list.innerHTML=state.history.map(h=>`<div class="history-item"><span class="history-icon">${icons[h.type]||'🏷'}</span><div class="history-info"><div class="history-name">${h.name}</div><div class="history-meta">${h.type} · ${h.time}${h.site?' · Site #'+h.site:''}</div></div><div class="history-actions"><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="redownload(${h.id})">Re-export</button></div></div>`).join(''); }
+function redownload(id){ const h=state.history.find(x=>x.id===id); if(!h) return; downloadJson(h.json, `${h.name.replace(/\s+/g,'_')}_reexport.json`); showToast('Re-exported','success'); }
 
-function renderSites(){
-  const g=document.getElementById('sitesGrid');
-  if(!g) return;
-  if(state.sites.length===0){
-    g.innerHTML='<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🌐</span>No sites yet. Add your first client site.</div>';
-    return;
-  }
-  const typeLabel={simple:'Simple',datalayer:'Data Layer',spa:'SPA'};
-  const typeCls={simple:'type-simple',datalayer:'type-datalayer',spa:'type-spa'};
-  g.innerHTML=state.sites.map(s=>`
-    <div class="site-card ${state.activeSite===s.id?'selected':''}" onclick="selectSite(${s.id})">
-      <div class="site-type-badge ${typeCls[s.type]||'type-simple'}">${typeLabel[s.type]||s.type}</div>
-      <div class="site-name">${s.name}</div>
-      <div class="site-id">${s.containerId}</div>
-      ${s.events?.length?`<div class="site-tags-count">DL Events: ${s.events.join(', ')}</div>`:''}
-      <div style="display:flex;justify-content:flex-end;margin-top:12px">
-        <button class="btn btn-danger" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();removeSite(${s.id})">Remove</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function selectSite(id){
-  state.activeSite=id;
-  document.getElementById('activeSite').value=id;
-  renderSites();
-  showToast('Site selected','success');
-}
-
-function removeSite(id){
-  state.sites=state.sites.filter(s=>s.id!==id);
-  localStorage.setItem('gtm_sites',JSON.stringify(state.sites));
-  if(state.activeSite===id){ state.activeSite=''; document.getElementById('activeSite').value=''; }
-  populateSiteDropdown();
-  renderSites();
-}
-
-function populateSiteDropdown(){
-  const sel=document.getElementById('activeSite');
-  const cur=sel.value;
-  sel.innerHTML='<option value="">— select site —</option>'+
-    state.sites.map(s=>`<option value="${s.id}">${s.name} (${s.containerId})</option>`).join('');
-  if(cur) sel.value=cur;
-}
-
-function onSiteChange(){
-  state.activeSite=document.getElementById('activeSite').value;
-}
-
-// ─── HISTORY ─────────────────────────────────────────────────────────────────
-function renderHistory(){
-  const list=document.getElementById('historyList');
-  if(!list) return;
-  if(state.history.length===0){
-    list.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>No exports yet</div>';
-    return;
-  }
-  const icons={ga4_event:'📊',ga4_config:'⚙️',meta_pixel:'📘',gads_conversion:'🎯',gads_remarketing:'🔁',custom_html:'</>'}; 
-  list.innerHTML=state.history.map(h=>`
-    <div class="history-item">
-      <span class="history-icon">${icons[h.type]||'🏷'}</span>
-      <div class="history-info">
-        <div class="history-name">${h.name}</div>
-        <div class="history-meta">${h.type} · ${h.time}${h.site?' · Site #'+h.site:''}</div>
-      </div>
-      <div class="history-actions">
-        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="redownload(${h.id})">Re-export</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function redownload(id){
-  const h=state.history.find(x=>x.id===id);
-  if(!h) return;
-  const blob=new Blob([JSON.stringify(h.json,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download=`${h.name.replace(/\s+/g,'_')}_reexport.json`;
-  a.click();URL.revokeObjectURL(url);
-  showToast('Re-exported','success');
-}
-
-// ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer;
-function showToast(msg,type='success'){
-  const t=document.getElementById('toast');
-  t.textContent=(type==='success'?'✓ ':'✕ ')+msg;
-  t.className='toast show '+(type==='success'?'success':'error');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
-}
+function showToast(msg,type='success'){ const t=document.getElementById('toast'); t.textContent=(type==='success'?'✓ ':'✕ ')+msg; t.className='toast show '+(type==='success'?'success':'error'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
 
 init();
 </script>
