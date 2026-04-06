@@ -384,6 +384,11 @@ header{
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{border-color:rgba(0,229,160,0.4);color:var(--green);}
 .toast.error{border-color:rgba(255,95,95,0.4);color:var(--red);}
+.popup-toast{position:fixed;top:76px;right:24px;z-index:1200;background:rgba(13,13,15,0.96);border:1px solid var(--accent-border);color:var(--text);padding:14px 16px;border-radius:10px;min-width:280px;box-shadow:0 12px 30px rgba(0,0,0,0.35);transform:translateY(-10px);opacity:0;pointer-events:none;transition:all .25s ease;}
+.popup-toast.show{transform:translateY(0);opacity:1;}
+.popup-toast .popup-title{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px;}
+.popup-toast .popup-body{font-size:11px;color:var(--text);}
+.popup-toast .popup-sub{font-size:10px;color:var(--dim);margin-top:4px;}
 
 /* EMPTY STATE */
 .empty-state{
@@ -409,6 +414,19 @@ header{
 .saved-item-meta{font-size:10px;color:var(--dim);margin-top:4px}
 body{padding-bottom:64px}
 
+.reusable-details{margin-top:10px;border:1px solid var(--border);border-radius:8px;background:var(--s2);overflow:hidden}
+.reusable-details summary{list-style:none;cursor:pointer;padding:10px 12px;font-size:11px;color:var(--text);display:flex;align-items:center;justify-content:space-between}
+.reusable-details summary::-webkit-details-marker{display:none}
+.reusable-details[open] summary{border-bottom:1px solid var(--border)}
+.reusable-section-body{padding:10px 12px}
+.inline-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.inline-tools .mini-input,.inline-tools .mini-select{background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:180px}
+.inline-tools .mini-input:focus,.inline-tools .mini-select:focus{outline:none;border-color:var(--accent)}
+.mini-btn{padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent)}
+.reusable-mini-list .template-item{margin-bottom:6px}
+.sidebar-reusable-select{width:100%;margin-bottom:10px}
+
 /* RESPONSIVE */
 @media(max-width:900px){
   .workspace{grid-template-columns:1fr;}
@@ -423,7 +441,7 @@ body{padding-bottom:64px}
     <span class="logo-mark">GTM</span>
     Tag Automator
   </div>
-  <div class="version-badge" id="appVersion">v1.1.0</div>
+  <div class="version-badge" id="appVersion">v1.2.2</div>
   <nav class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('builder')">Builder</button>
     <button class="nav-tab" onclick="showPage('sites')">Sites</button>
@@ -433,6 +451,7 @@ body{padding-bottom:64px}
     <select class="site-selector" id="activeSite" onchange="onSiteChange()">
       <option value="">— select site —</option>
     </select>
+    <button class="btn btn-ghost" onclick="startNewTag()">＋ New Tag</button>
     <button class="btn btn-ghost" onclick="saveCurrentReusable()">⟳ Save Reusable</button>
     <button class="btn btn-ghost" onclick="saveTagToContainer()">＋ Save Tag</button>
     <button class="btn btn-primary" onclick="exportJSON()">⬇ Export All</button>
@@ -448,8 +467,28 @@ body{padding-bottom:64px}
         <div class="sidebar-label">Tag Templates</div>
         <div id="templateList"></div>
         <div class="saved-library">
-          <div class="sidebar-label">Reusable Tags</div>
-          <div id="reusableList"></div>
+          <div class="sidebar-label">Reusable Library</div>
+          <details class="reusable-details" open>
+            <summary>Reusable Tags <span id="sideReusableTagCount">0</span></summary>
+            <div class="reusable-section-body">
+              <select class="mini-select sidebar-reusable-select" id="sidebarReusableTagsSelect" onchange="loadSidebarReusable('tags', this.value)"></select>
+              <div class="reusable-mini-list" id="reusableTagsList"></div>
+            </div>
+          </details>
+          <details class="reusable-details">
+            <summary>Reusable Triggers <span id="sideReusableTriggerCount">0</span></summary>
+            <div class="reusable-section-body">
+              <select class="mini-select sidebar-reusable-select" id="sidebarReusableTriggersSelect" onchange="loadSidebarReusable('triggers', this.value)"></select>
+              <div class="reusable-mini-list" id="reusableTriggersList"></div>
+            </div>
+          </details>
+          <details class="reusable-details">
+            <summary>Reusable Variables <span id="sideReusableVariableCount">0</span></summary>
+            <div class="reusable-section-body">
+              <select class="mini-select sidebar-reusable-select" id="sidebarReusableVariablesSelect" onchange="loadSidebarReusable('variables', this.value)"></select>
+              <div class="reusable-mini-list" id="reusableVariablesList"></div>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -539,7 +578,9 @@ body{padding-bottom:64px}
     <span class="count-pill">Saved Tags: <span id="savedTagCount">0</span></span>
     <span class="count-pill">Saved Triggers: <span id="savedTriggerCount">0</span></span>
     <span class="count-pill">Saved Variables: <span id="savedVariableCount">0</span></span>
-    <span class="count-pill">Reusable: <span id="reusableCount">0</span></span>
+    <span class="count-pill">Reusable Tags: <span id="reusableTagCount">0</span></span>
+    <span class="count-pill">Reusable Triggers: <span id="reusableTriggerCount">0</span></span>
+    <span class="count-pill">Reusable Variables: <span id="reusableVariableCount">0</span></span>
   </div>
   <div class="export-actions">
     <input id="exportName" class="export-name" placeholder="export filename (optional)"/>
@@ -549,6 +590,7 @@ body{padding-bottom:64px}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="popup-toast" id="popupToast"><div class="popup-title"></div><div class="popup-body"></div><div class="popup-sub"></div></div>
 
 <script>
 // ─── DATA ───────────────────────────────────────────────────────────────────
@@ -660,16 +702,18 @@ const CONDITION_VARS = ['Page URL','Page Path','Page Hostname','Page Title','Ref
 const CONDITION_OPS = ['contains','equals','matches RegEx','starts with','ends with','does not contain','does not equal'];
 
 let state = {
-  version: '1.1.0',
+  version: '1.2.0',
   activeTemplate: null,
   tagName: '',
   params: [],
   eventParams: [],
   htmlCode: '',
   triggers: [],
+  variables: [],
   sites: JSON.parse(localStorage.getItem('gtm_sites')||'[]'),
   history: JSON.parse(localStorage.getItem('gtm_history')||'[]'),
-  reusable: JSON.parse(localStorage.getItem('gtm_reusable_tags')||'[]'),
+  reusableStore: JSON.parse(localStorage.getItem('gtm_reusable_store')||'null') || {tags: JSON.parse(localStorage.getItem('gtm_reusable_tags')||'[]'), triggers: [], variables: []},
+  activeReusableType: 'tags',
   activeSite: '',
 };
 
@@ -762,75 +806,202 @@ function buildContainerExport(site){
   };
 }
 
+function persistReusableStore(){
+  localStorage.setItem('gtm_reusable_store', JSON.stringify(state.reusableStore));
+}
+
 function updateCountsBar(){
   const site = getActiveSiteObj();
   const tags = site?.tags?.length || 0;
   const triggers = site?.triggers?.length || 0;
   const variables = site?.variables?.length || 0;
-  const reusable = state.reusable?.length || 0;
+  const reusableTags = state.reusableStore?.tags?.length || 0;
+  const reusableTriggers = state.reusableStore?.triggers?.length || 0;
+  const reusableVariables = state.reusableStore?.variables?.length || 0;
   const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
   set('savedTagCount', tags);
   set('savedTriggerCount', triggers);
   set('savedVariableCount', variables);
-  set('reusableCount', reusable);
+  set('reusableTagCount', reusableTags);
+  set('reusableTriggerCount', reusableTriggers);
+  set('reusableVariableCount', reusableVariables);
 }
 
 function renderReusable(){
-  const el = document.getElementById('reusableList');
-  if(!el) return;
-  if(!state.reusable.length){
-    el.innerHTML = '<div class="t-desc">No reusable tags saved yet</div>';
-    return;
-  }
-  el.innerHTML = state.reusable.map(item=>`<div class="template-item" onclick="loadReusable(${item.id})"><div class="t-name">♻ ${item.name}</div><div class="t-desc">${item.templateName || item.type || 'Saved tag'}</div><div class="saved-item-meta">${item.savedAt}</div></div>`).join('');
+  const groups = [
+    {key:'tags', el:'reusableTagsList', count:'sideReusableTagCount', select:'sidebarReusableTagsSelect'},
+    {key:'triggers', el:'reusableTriggersList', count:'sideReusableTriggerCount', select:'sidebarReusableTriggersSelect'},
+    {key:'variables', el:'reusableVariablesList', count:'sideReusableVariableCount', select:'sidebarReusableVariablesSelect'}
+  ];
+  groups.forEach(group=>{
+    const listEl = document.getElementById(group.el);
+    const countEl = document.getElementById(group.count);
+    const selectEl = document.getElementById(group.select);
+    const items = state.reusableStore?.[group.key] || [];
+    if(countEl) countEl.textContent = items.length;
+    if(selectEl) selectEl.innerHTML = getReusableOptions(group.key);
+    if(!listEl) return;
+    if(!items.length){
+      listEl.innerHTML = `<div class="t-desc">No reusable ${group.key} saved yet</div>`;
+      return;
+    }
+    listEl.innerHTML = items.slice(0,12).map(item=>`<div class="template-item"><div class="t-name">♻ ${item.name}</div><div class="t-desc">${item.templateName || item.type || ('Saved '+group.key.slice(0,-1))}${item.mode==='item' ? ' · single item' : ' · set'}</div><div class="saved-item-meta">${item.savedAt || ''}</div><div style="margin-top:8px"><button class="mini-btn" onclick="loadReusable(${item.id}, '${group.key}')">Use ${group.key.slice(0,-1)}</button></div></div>`).join('');
+  });
+}
+
+function loadSidebarReusable(type, id){
+  if(!id) return;
+  loadReusable(id, type);
+  const map = {tags:'sidebarReusableTagsSelect', triggers:'sidebarReusableTriggersSelect', variables:'sidebarReusableVariablesSelect'};
+  const sel = document.getElementById(map[type]);
+  if(sel) sel.value='';
+}
+
+function getReusableOptions(type){
+  const items = state.reusableStore?.[type] || [];
+  return [`<option value="">Select reusable ${type.slice(0,-1)}</option>`, ...items.map(item=>`<option value="${item.id}">${escapeHtml(item.name)}</option>`)].join('');
 }
 
 function saveCurrentReusable(){
-  const bundle = buildCurrentBundle();
-  if(!bundle){ showToast('Select a template first','error'); return; }
-  const item = {
-    id: Date.now(),
-    name: bundle.tag.name || 'Reusable Tag',
-    templateId: state.activeTemplate,
-    templateName: TEMPLATES.find(t=>t.id===state.activeTemplate)?.name || 'Template',
-    savedAt: new Date().toLocaleString(),
-    builderState: {
-      activeTemplate: state.activeTemplate,
-      tagName: state.tagName,
-      params: clone(state.params),
-      eventParams: clone(state.eventParams),
-      htmlCode: state.htmlCode,
-      triggers: clone(state.triggers)
-    }
-  };
-  state.reusable.unshift(item);
-  localStorage.setItem('gtm_reusable_tags', JSON.stringify(state.reusable.slice(0,50)));
-  renderReusable();
-  updateCountsBar();
-  showToast('Saved to reusable library','success');
+  saveSectionReusable('tags', true);
 }
 
-function loadReusable(id){
-  const item = state.reusable.find(x=>x.id===id);
-  if(!item) return;
-  state.activeTemplate = item.builderState.activeTemplate;
-  state.tagName = item.builderState.tagName || '';
-  state.params = clone(item.builderState.params || []);
-  state.eventParams = clone(item.builderState.eventParams || []);
-  state.htmlCode = item.builderState.htmlCode || '';
-  state.triggers = clone(item.builderState.triggers || []);
-  renderTemplates();
-  const tmpl = TEMPLATES.find(t=>t.id===state.activeTemplate);
-  if(tmpl){
-    renderForm(tmpl);
-    const htmlEl=document.getElementById('htmlCode');
-    if(htmlEl) htmlEl.value = state.htmlCode || '';
-    updatePreview();
+function saveSectionReusable(type, silent){
+  const base = Date.now();
+  const savedAt = new Date().toLocaleString();
+  let item = null;
+
+  if(type==='tags'){
+    const bundle = buildCurrentBundle();
+    if(!bundle){ showToast('Select a template first','error'); return; }
+    const name = (document.getElementById('tagReusableName')?.value || bundle.tag.name || 'Reusable Tag').trim();
+    item = {
+      id: base,
+      mode:'set',
+      name,
+      templateId: state.activeTemplate,
+      templateName: TEMPLATES.find(t=>t.id===state.activeTemplate)?.name || 'Template',
+      savedAt,
+      builderState: {
+        activeTemplate: state.activeTemplate,
+        tagName: state.tagName,
+        params: clone(state.params),
+        eventParams: clone(state.eventParams),
+        htmlCode: state.htmlCode,
+        triggers: clone(state.triggers),
+        variables: clone(state.variables)
+      }
+    };
+    state.reusableStore.tags.unshift(item);
   }
-  showPage('builder');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelector('.nav-tab')?.classList.add('active');
-  showToast('Reusable tag loaded','success');
+
+  if(type==='triggers'){
+    if(!(state.triggers||[]).length){ showToast('Add at least one trigger first','error'); return; }
+    const name = (document.getElementById('triggerReusableName')?.value || `Reusable Trigger Set ${state.reusableStore.triggers.length+1}`).trim();
+    item = { id: base, mode:'set', name, type:'trigger_set', savedAt, data: clone(state.triggers) };
+    state.reusableStore.triggers.unshift(item);
+  }
+
+  if(type==='variables'){
+    if(!(state.variables||[]).length){ showToast('Add at least one variable first','error'); return; }
+    const name = (document.getElementById('variableReusableName')?.value || `Reusable Variable Set ${state.reusableStore.variables.length+1}`).trim();
+    item = { id: base, mode:'set', name, type:'variable_set', savedAt, data: clone(state.variables) };
+    state.reusableStore.variables.unshift(item);
+  }
+
+  persistReusableStore();
+  renderReusable();
+  updateCountsBar();
+  if(!silent) showPopup('Reusable saved', `${item.name} was saved in reusable ${type}`, 'You can load it again from the same form section or the sidebar library.');
+  renderSectionReusableControls();
+}
+
+function saveSingleReusable(type, indexOrId){
+  const base = Date.now();
+  const savedAt = new Date().toLocaleString();
+  let item = null;
+  if(type==='variables'){
+    const variable = clone((state.variables||[])[indexOrId]);
+    if(!variable) return;
+    const name = (variable.name || variable.key || `Variable ${indexOrId+1}`).trim();
+    item = { id: base, mode:'item', name, type:'variable_item', savedAt, data:[variable] };
+    state.reusableStore.variables.unshift(item);
+    showPopup('Variable saved', `${name} was added to reusable variables`, 'You can now add it into any new tag from the Variables dropdown or the sidebar.');
+  }
+  if(type==='triggers'){
+    const trigger = clone((state.triggers||[]).find(t=>String(t.id)===String(indexOrId)));
+    if(!trigger) return;
+    const name = (trigger.reusableName || trigger.eventName || trigger.label || 'Reusable Trigger').trim();
+    item = { id: base, mode:'item', name, type:'trigger_item', savedAt, data:[trigger] };
+    state.reusableStore.triggers.unshift(item);
+    showPopup('Trigger saved', `${name} was added to reusable triggers`, 'You can now add it into any new tag from the Triggers dropdown or the sidebar.');
+  }
+  if(!item) return;
+  persistReusableStore();
+  renderReusable();
+  updateCountsBar();
+  renderSectionReusableControls();
+}
+
+function loadReusable(id, type='tags'){
+  const item = (state.reusableStore?.[type] || []).find(x=>String(x.id)===String(id));
+  if(!item) return;
+  if(type==='tags'){
+    state.activeTemplate = item.builderState.activeTemplate;
+    state.tagName = item.builderState.tagName || '';
+    state.params = clone(item.builderState.params || []);
+    state.eventParams = clone(item.builderState.eventParams || []);
+    state.htmlCode = item.builderState.htmlCode || '';
+    state.triggers = clone(item.builderState.triggers || []);
+    state.variables = clone(item.builderState.variables || []);
+    renderTemplates();
+    const tmpl = TEMPLATES.find(t=>t.id===state.activeTemplate);
+    if(tmpl){
+      renderForm(tmpl);
+      const htmlEl=document.getElementById('htmlCode');
+      if(htmlEl) htmlEl.value = state.htmlCode || '';
+      updatePreview();
+    }
+    showPage('builder');
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector('.nav-tab')?.classList.add('active');
+    showPopup('Reusable loaded', `${item.name} is now loaded in the builder`, 'Review the preview panel before saving or exporting.');
+    return;
+  }
+  if(type==='triggers'){
+    const incoming = clone(item.data || []);
+    if(item.mode==='item') state.triggers = [...(state.triggers||[]), ...incoming];
+    else state.triggers = incoming;
+    renderTriggerBlocks();
+    updatePreview();
+    showPopup(item.mode==='item' ? 'Trigger added' : 'Trigger set loaded', `${item.name} was loaded into this tag`, `${incoming.length} trigger(s) ${item.mode==='item' ? 'added' : 'attached'}.`);
+    return;
+  }
+  if(type==='variables'){
+    const incoming = clone(item.data || []);
+    if(item.mode==='item') state.variables = [...(state.variables||[]), ...incoming];
+    else state.variables = incoming;
+    renderVariableRows();
+    updatePreview();
+    showPopup(item.mode==='item' ? 'Variable added' : 'Variable set loaded', `${item.name} was loaded into this tag`, `${incoming.length} variable(s) ${item.mode==='item' ? 'added' : 'attached'}.`);
+    return;
+  }
+}
+
+function applySectionReusable(type, id){
+  if(!id) return;
+  loadReusable(id, type);
+  const sel = document.getElementById(type==='tags' ? 'tagReusableSelect' : type==='triggers' ? 'triggerReusableSelect' : 'variableReusableSelect');
+  if(sel) sel.value='';
+}
+
+function renderSectionReusableControls(){
+  const tagSelect = document.getElementById('tagReusableSelect');
+  if(tagSelect) tagSelect.innerHTML = getReusableOptions('tags');
+  const triggerSelect = document.getElementById('triggerReusableSelect');
+  if(triggerSelect) triggerSelect.innerHTML = getReusableOptions('triggers');
+  const variableSelect = document.getElementById('variableReusableSelect');
+  if(variableSelect) variableSelect.innerHTML = getReusableOptions('variables');
 }
 
 function saveTagToContainer(){
@@ -846,7 +1017,7 @@ function saveTagToContainer(){
   site.variables.push(...bundle.variables);
   persistSites();
   updatePreview();
-  showToast('Saved current tag to site container','success');
+  showPopup('Saved to site', `${bundle.tag.name} was saved to ${site.name}`, `${site.tags.length} tag(s) · ${site.triggers.length} trigger(s) · ${site.variables.length} variable(s) now in this site.`);
 }
 
 function downloadJSON(data, filename){
@@ -875,6 +1046,7 @@ function selectTemplate(id){
   state.eventParams = (tmpl.eventParams||[]).map(p=>({...p}));
   state.htmlCode = '';
   state.triggers = [];
+  state.variables = [];
   state.tagName = tmpl.name + ' - ';
   renderTemplates();
   renderForm(tmpl);
@@ -900,6 +1072,11 @@ function renderForm(tmpl){
         <span class="collapse-arrow">▾</span>
       </div>
       <div class="form-section-body">
+        <div class="inline-tools">
+          <select id="tagReusableSelect" class="mini-select" onchange="applySectionReusable('tags', this.value)"></select>
+          <input id="tagReusableName" class="mini-input" placeholder="name this tag reusable"/>
+          <button class="mini-btn" onclick="saveSectionReusable('tags')">Save Tag Reusable</button>
+        </div>
         <div class="field-row cols-2">
           <div class="field">
             <label>Tag Name *</label>
@@ -968,6 +1145,29 @@ function renderForm(tmpl){
       </div>
     </div>`:''}
 
+
+
+    <!-- VARIABLES -->
+    <div class="form-section" id="sec-variables">
+      <div class="form-section-header" onclick="toggleSection('sec-variables')">
+        <div class="section-title-row">
+          <span class="section-icon">🧩</span>
+          <span class="section-name">Variables</span>
+          <span class="section-tag">base reusable set</span>
+        </div>
+        <span class="collapse-arrow">▾</span>
+      </div>
+      <div class="form-section-body">
+        <div class="inline-tools">
+          <select id="variableReusableSelect" class="mini-select" onchange="applySectionReusable('variables', this.value)"></select>
+          <input id="variableReusableName" class="mini-input" placeholder="name this variable set"/>
+          <button class="mini-btn" onclick="saveSectionReusable('variables')">Save Variable Set</button><div class="field-hint" style="margin-top:6px">Save the whole variable set here, or save individual variables from each row below.</div>
+          <button class="mini-btn" onclick="addVariable()">+ Add Variable</button>
+        </div>
+        <div id="variableRows"></div>
+      </div>
+    </div>
+
     <!-- TRIGGERS -->
     <div class="form-section" id="sec-triggers">
       <div class="form-section-header" onclick="toggleSection('sec-triggers')">
@@ -979,6 +1179,11 @@ function renderForm(tmpl){
         <span class="collapse-arrow">▾</span>
       </div>
       <div class="form-section-body">
+        <div class="inline-tools">
+          <select id="triggerReusableSelect" class="mini-select" onchange="applySectionReusable('triggers', this.value)"></select>
+          <input id="triggerReusableName" class="mini-input" placeholder="name this trigger set"/>
+          <button class="mini-btn" onclick="saveSectionReusable('triggers')">Save Trigger Set</button><div class="field-hint" style="margin-top:6px">Save the whole trigger set here, or save individual triggers from each trigger block below.</div>
+        </div>
         <div class="sidebar-label" style="margin-bottom:8px">Quick Add Trigger Type</div>
         <div class="trigger-types">
           ${TRIGGER_TYPES.map(t=>`<button class="trigger-type-btn" onclick="addTrigger('${t.id}','${t.label}')">${t.icon} ${t.label}</button>`).join('')}
@@ -989,7 +1194,9 @@ function renderForm(tmpl){
   `;
   renderParamRows();
   renderEventParamRows();
+  renderVariableRows();
   renderTriggerBlocks();
+  renderSectionReusableControls();
 }
 
 // ─── PARAMS ──────────────────────────────────────────────────────────────────
@@ -1060,6 +1267,44 @@ function removeEventParam(i){
   updatePreview();
 }
 
+// ─── VARIABLES ───────────────────────────────────────────────────────────────
+function renderVariableRows(){
+  const c = document.getElementById('variableRows');
+  if(!c) return;
+  if(!(state.variables||[]).length){
+    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No variables yet. Add reusable base variables here.</div>';
+    return;
+  }
+  c.innerHTML = `
+    <div class="params-head" style="grid-template-columns:1.2fr 1fr 120px 96px 28px"><span>Variable Name</span><span>Key / Value</span><span>Type</span><span>Reusable</span><span></span></div>
+    ${state.variables.map((v,i)=>`
+      <div class="param-row" style="grid-template-columns:1.2fr 1fr 120px 96px 28px">
+        <input class="param-input" value="${escapeAttr(v.name||'')}" oninput="state.variables[${i}].name=this.value;updatePreview()" placeholder="Page URL"/>
+        <input class="param-input" value="${escapeAttr(v.key||v.value||'')}" oninput="state.variables[${i}].key=this.value;updatePreview()" placeholder="page_url or constant value"/>
+        <select class="param-select" onchange="state.variables[${i}].type=this.value;updatePreview()">
+          <option value="dlv" ${(v.type||'dlv')==='dlv'?'selected':''}>DLV</option>
+          <option value="const" ${v.type==='const'?'selected':''}>CONST</option>
+          <option value="url" ${v.type==='url'?'selected':''}>URL</option>
+          <option value="js" ${v.type==='js'?'selected':''}>JS</option>
+        </select>
+        <button class="mini-btn" onclick="saveSingleReusable('variables', ${i})">Save</button>
+        <button class="remove-btn" onclick="removeVariable(${i})">×</button>
+      </div>
+    `).join('')}
+  `;
+}
+function addVariable(){
+  state.variables = state.variables || [];
+  state.variables.push({name:'',key:'',type:'dlv'});
+  renderVariableRows();
+  updatePreview();
+}
+function removeVariable(i){
+  state.variables.splice(i,1);
+  renderVariableRows();
+  updatePreview();
+}
+
 // ─── TRIGGERS ────────────────────────────────────────────────────────────────
 function addTrigger(typeId, label){
   state.triggers.push({
@@ -1108,11 +1353,14 @@ function renderTriggerBlocks(){
   c.innerHTML = state.triggers.map(t=>`
     <div class="trigger-block">
       <div class="trigger-block-header">
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span class="trigger-block-title">${TRIGGER_TYPES.find(x=>x.id===t.type)?.icon||'⚡'} ${t.label}</span>
           ${t.type==='custom_event'?`<input class="param-input" style="width:160px" placeholder="event name" oninput="updateTriggerEvent(${t.id},this.value)" value="${t.eventName||''}"/>`:''}
         </div>
-        <button class="remove-btn" onclick="removeTrigger(${t.id})">×</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="mini-btn" onclick="saveSingleReusable('triggers', ${t.id})">Save Trigger</button>
+          <button class="remove-btn" onclick="removeTrigger(${t.id})">×</button>
+        </div>
       </div>
       ${['pageview','domready','windowload','click_all','click_link','form_submit','custom_event','history','timer','scroll'].includes(t.type)?`
       <div style="margin-bottom:8px">
@@ -1148,6 +1396,22 @@ function updateTriggerEvent(id,val){
   const t = state.triggers.find(t=>t.id===id);
   if(t) t.eventName=val;
   updatePreview();
+}
+
+
+function startNewTag(){
+  state.activeTemplate = null;
+  state.tagName = '';
+  state.params = [];
+  state.eventParams = [];
+  state.htmlCode = '';
+  state.triggers = [];
+  state.variables = [];
+  renderTemplates();
+  document.getElementById('mainForm').innerHTML = `<div class="empty-state"><span class="empty-icon">🏷</span>Pick a template from the left to start a fresh tag<br>You can save it to the active site when ready</div>`;
+  document.getElementById('previewBody').innerHTML = `<div class="empty-state" style="padding:24px 12px"><span class="empty-icon" style="font-size:24px">👁</span>Preview will appear here before export</div>`;
+  renderSectionReusableControls();
+  showToast('Fresh tag started','success');
 }
 
 // ─── SECTION TOGGLE ──────────────────────────────────────────────────────────
@@ -1186,8 +1450,8 @@ function buildGTMJson(){
     triggerId:`${seed}${i+1}`,
     type: mapTriggerType(t.type),
     name: `${tagName} - ${t.label}`,
-    filter: t.conditions.filter(c=>c.value).map(c=>({
-      type:'contains',
+    filter: (t.conditions||[]).filter(c=>c.value).map(c=>({
+      type: mapConditionOperator(c.operator),
       parameter:[
         {type:'template',key:'arg0',value:`{{${c.variable}}}`},
         {type:'template',key:'arg1',value:c.value}
@@ -1200,6 +1464,13 @@ function buildGTMJson(){
         {type:'template',key:'arg1',value:t.eventName}
       ]
     }] : undefined
+  }));
+
+  const variablesConfig = (state.variables||[]).filter(v=>v.name).map((v,i)=>({
+    variableId:`${seed}V${i+1}`,
+    name:v.name,
+    type: mapVariableType(v.type),
+    parameter: buildVariableParameters(v)
   }));
 
   let tagConfig = {
@@ -1220,7 +1491,7 @@ function buildGTMJson(){
       description: document.getElementById('tagNotes')?.value||'',
       tag:[tagConfig],
       trigger: triggersConfig,
-      variable:[]
+      variable:variablesConfig
     }
   };
 
@@ -1257,6 +1528,33 @@ function mapTriggerType(t){
     scroll:'SCROLL_DEPTH',custom_event:'CUSTOM_EVENT',history:'HISTORY_CHANGE',timer:'TIMER'};
   return m[t]||'PAGEVIEW';
 }
+function mapConditionOperator(op){
+  const m={
+    'contains':'contains',
+    'equals':'equals',
+    'starts with':'startsWith',
+    'ends with':'endsWith',
+    'matches RegEx':'matchRegex',
+    'does not equal':'notEquals',
+    'does not contain':'notContains',
+    'is undefined':'equals'
+  };
+  return m[op] || 'contains';
+}
+function mapVariableType(type){
+  const m={dlv:'v', const:'c', url:'u', js:'jsm'};
+  return m[type] || 'v';
+}
+function buildVariableParameters(v){
+  const val = v.key || v.value || '';
+  if(v.type==='const') return [{type:'template', key:'value', value:val}];
+  if(v.type==='url') return [{type:'template', key:'component', value:val || 'URL'}];
+  if(v.type==='js') return [{type:'template', key:'javascript', value:val}];
+  return [
+    {type:'template', key:'name', value:val},
+    {type:'integer', key:'dataLayerVersion', value:'2'}
+  ];
+}
 
 function updatePreview(){
   const json = buildGTMJson();
@@ -1265,6 +1563,7 @@ function updatePreview(){
 
   const tagName = json.containerVersion.tag[0]?.name||'Unnamed';
   const triggerCount = json.containerVersion.trigger.length;
+  const variableCount = json.containerVersion.variable.length;
   const paramCount = json.containerVersion.tag[0]?.parameter?.length||0;
   const site = getActiveSiteObj();
 
@@ -1274,7 +1573,8 @@ function updatePreview(){
       <div class="summary-row"><span class="summary-label">Type</span><span class="summary-val">${json.containerVersion.tag[0]?.type||'—'}</span></div>
       <div class="summary-row"><span class="summary-label">Parameters</span><span class="summary-val">${paramCount}</span></div>
       <div class="summary-row"><span class="summary-label">Triggers</span><span class="summary-val">${triggerCount} trigger${triggerCount!==1?'s':''}</span></div>
-      <div class="summary-row"><span class="summary-label">Saved In Site</span><span class="summary-val">${site ? ((site.tags?.length||0)+' tags') : 'No site selected'}</span></div>
+      <div class="summary-row"><span class="summary-label">Variables</span><span class="summary-val">${variableCount} variable${variableCount!==1?'s':''}</span></div>
+      <div class="summary-row"><span class="summary-label">Saved In Site</span><span class="summary-val">${site ? ((site.tags?.length||0)+' tags · '+(site.triggers?.length||0)+' triggers · '+(site.variables?.length||0)+' variables') : 'No site selected'}</span></div>
       <div class="summary-row">
         <span class="summary-label">Status</span>
         <span class="summary-val">
@@ -1286,6 +1586,13 @@ function updatePreview(){
     <div class="sidebar-label" style="margin-bottom:8px">JSON Output</div>
     <div class="json-output">${syntaxHighlight(JSON.stringify(json,null,2))}</div>
   `;
+}
+
+function escapeHtml(str=''){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escapeAttr(str=''){
+  return escapeHtml(str);
 }
 
 function syntaxHighlight(json){
@@ -1355,7 +1662,7 @@ function addSite(){
   document.getElementById('newSiteEvents').value='';
   document.getElementById('newSiteUrl').value='';
   document.getElementById('newSiteDescription').value='';
-  showToast('Site added','success');
+  showPopup('Site saved', `${name} is ready to use`, `${id}${url ? ' · ' + url : ''}`);
 }
 
 function renderSites(){
@@ -1387,7 +1694,7 @@ function selectSite(id){
   document.getElementById('activeSite').value=String(id);
   renderSites();
   updateCountsBar();
-  showToast('Site selected','success');
+  showPopup('Active site changed', `${state.sites.find(s=>String(s.id)===String(id))?.name || 'Site'} is now active`, 'Any new saved tag will go into this site container.');
 }
 
 function removeSite(id){
@@ -1449,6 +1756,18 @@ function redownload(id){
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer;
+let popupTimer;
+function showPopup(title, body, sub=''){
+  const el = document.getElementById('popupToast');
+  if(!el) return;
+  el.querySelector('.popup-title').textContent = title;
+  el.querySelector('.popup-body').textContent = body;
+  el.querySelector('.popup-sub').textContent = sub || '';
+  el.classList.add('show');
+  clearTimeout(popupTimer);
+  popupTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+}
+
 function showToast(msg,type='success'){
   const t=document.getElementById('toast');
   t.textContent=(type==='success'?'✓ ':'✕ ')+msg;
