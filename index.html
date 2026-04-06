@@ -541,16 +541,19 @@ body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;font-
       <div class="templates-screen">
         <div class="template-categories" id="templateCategories"></div>
         <div class="templates-list-panel">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div style="font-size:16px;font-weight:700" id="templateCatTitle">All Templates</div>
-              <div style="font-size:12px;color:var(--muted)" id="templateCatSub">Reusable tag/trigger/variable templates</div>
-            </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:16px;font-weight:700" id="templateCatTitle">All Templates</div>
+            <div style="font-size:12px;color:var(--muted)" id="templateCatSub">Reusable tag/trigger/variable templates</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="openAddCategoryModal()">+ Category</button>
             <button class="btn btn-accent btn-sm" onclick="openAddTemplateModal()">+ Add Template</button>
           </div>
-          <div class="templates-grid" id="templatesGrid"></div>
         </div>
+        <div class="templates-grid" id="templatesGrid"></div>
       </div>
+    </div>
     </div>
 
     <!-- ── API SCREEN ── -->
@@ -643,6 +646,7 @@ body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;font-
 let APP = {
   containers: JSON.parse(localStorage.getItem('gtm_containers')||'[]'),
   templates: JSON.parse(localStorage.getItem('gtm_templates')||'null') || getDefaultTemplates(),
+  templateCategories: JSON.parse(localStorage.getItem('gtm_template_categories')||'null') || getDefaultTemplateCategories(),
   apiCreds: JSON.parse(localStorage.getItem('gtm_api')||'{}'),
   activeContainerId: null,
   activeWorkspace: 'tags', // tags | triggers | variables
@@ -659,6 +663,12 @@ function saveContainers(){
 function saveTemplates(){
   localStorage.setItem('gtm_templates',JSON.stringify(APP.templates));
 }
+function saveTemplateCategories(){
+  localStorage.setItem('gtm_template_categories',JSON.stringify(APP.templateCategories));
+}
+
+const DEFAULT_TEMPLATE_CATEGORIES = getDefaultTemplateCategories();
+const DEFAULT_TEMPLATE_CATEGORY_IDS = new Set(DEFAULT_TEMPLATE_CATEGORIES.map(c=>c.id));
 
 // ══════════════════════════════════════════════════════════════
 // DEFAULT DATA
@@ -702,7 +712,7 @@ function getDefaultTemplates(){
      conditions:[],icon:'🪟'},
     {id:'t12',cat:'triggers',name:'All Link Clicks',type:'trigger',triggerType:'LINK_CLICK',desc:'All anchor tag clicks',
      conditions:[],icon:'🔗'},
-    {id:'t13',cat:'triggers',name:'Purchase Event',type:'trigger',triggerType:'CUSTOM_EVENT',desc:'Data layer purchase event',
+    {id:'t13',cat:'triggers',name:'Purchase Custom Event',type:'trigger',triggerType:'CUSTOM_EVENT',desc:'Data layer purchase event',
      eventName:'purchase',conditions:[],icon:'🛒'},
     {id:'t14',cat:'triggers',name:'Form Submit',type:'trigger',triggerType:'FORM_SUBMISSION',desc:'Any form submission',
      conditions:[],icon:'📝'},
@@ -721,7 +731,7 @@ function getDefaultTemplates(){
      autoVar:'CLICK_URL',icon:'🖱'},
     {id:'t21',cat:'variables',name:'Click ID',type:'variable',varType:'AUTO',desc:'Clicked element ID',
      autoVar:'CLICK_ID',icon:'🖱'},
-    {id:'t22',cat:'variables',name:'Click Classes',type:'variable',varType:'AUTO',desc:'Clicked element CSS classes',
+    {id:'t22',cat:'variables',name:'Click Class',type:'variable',varType:'AUTO',desc:'Clicked element CSS classes',
      autoVar:'CLICK_CLASSES',icon:'🖱'},
     {id:'t23',cat:'variables',name:'Form ID',type:'variable',varType:'AUTO',desc:'Submitted form ID',
      autoVar:'FORM_ID',icon:'📝'},
@@ -743,7 +753,7 @@ function getDefaultTemplates(){
      params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'outbound_click',t:'text'}],
      eventParams:[{k:'link_url',v:'{{Click URL}}'},{k:'link_text',v:'{{Click Text}}'}],icon:'🔗'},
     // ── NAVIGATION ──
-    {id:'t31',cat:'navigation',name:'Nav Link Click',type:'tag',tagType:'googtag',desc:'Navigation menu click tracking',
+    {id:'t31',cat:'navigation',name:'Nav Click',type:'tag',tagType:'googtag',desc:'Navigation menu click tracking',
      params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'nav_click',t:'text'}],
      eventParams:[{k:'nav_item',v:'{{Click Text}}'},{k:'nav_url',v:'{{Click URL}}'},{k:'page_location',v:'{{Page URL}}'}],icon:'🧭'},
     {id:'t32',cat:'navigation',name:'Mobile Menu Open',type:'tag',tagType:'googtag',desc:'Mobile hamburger open',
@@ -759,8 +769,8 @@ function getDefaultTemplates(){
   ];
 }
 
-const TEMPLATE_CATEGORIES = [
-  {id:'all',label:'All Templates',icon:'📋'},
+function getDefaultTemplateCategories(){
+  return [
   {id:'ga4',label:'GA4',icon:'📊'},
   {id:'meta',label:'Meta Pixel',icon:'📘'},
   {id:'gads',label:'Google Ads',icon:'🎯'},
@@ -769,15 +779,16 @@ const TEMPLATE_CATEGORIES = [
   {id:'atoms',label:'Atoms',icon:'⚛️'},
   {id:'navigation',label:'Navigation',icon:'🧭'},
   {id:'masthead',label:'Masthead',icon:'🦸'},
-];
+  ];
+}
 
-const TAG_TYPES = ['googtag','html','awct','sp','ua','floodlight','gclidw','baut','img','mdn'];
+const TAG_TYPES = ['googtag','html','awct','sp','ua','floodlight','gclidw','img'];
 const TRIGGER_TYPES_LIST = [
   'PAGEVIEW','DOM_READY','WINDOW_LOAD','CLICK','LINK_CLICK',
   'FORM_SUBMISSION','SCROLL_DEPTH','CUSTOM_EVENT','HISTORY_CHANGE',
   'ELEMENT_VISIBILITY','TIMER','YOUTUBE_VIDEO','JS_ERROR'
 ];
-const VAR_TYPES = ['DLV','URL','AEVMD','AUTO','CONST','JS','SMREF','REGEXM','MK','CTXD','UNDEF'];
+const VAR_TYPES = ['DLV','URL','AUTO','CONST','JS','SMREF','REGEXM','CTXD','AEVMD','UNDEF'];
 const CONDITION_VARS = ['Page URL','Page Path','Page Hostname','Page Title','Referrer','Click Text','Click ID','Click Class','Click URL','Click Element','Form ID','Form Element','Form Classes','Form URL','Event Name','Environment Name','Container Version','Random Number','HTML ID','Custom JS Variable'];
 const CONDITION_OPS = ['equals','contains','starts with','ends with','matches RegEx','matches CSS selector','less than','greater than','does not equal','does not contain','is undefined'];
 const AUTO_VARS = ['CLICK_TEXT','CLICK_URL','CLICK_ID','CLICK_CLASSES','CLICK_ELEMENT','CLICK_TARGET','FORM_ID','FORM_ELEMENT','FORM_CLASSES','FORM_URL','FORM_TEXT'];
@@ -1095,7 +1106,7 @@ function renderTagEditor(item){
         <span class="chevron">▾</span>
       </div>
       <div class="section-card-body">
-        <textarea class="form-textarea" id="ef-html" style="min-height:160px;font-size:11px" placeholder="<script>&#10;// your code&#10;</script>">${item.html||''}</textarea>
+        <textarea class="form-textarea" id="ef-html" style="min-height:160px;font-size:11px" placeholder="<script>&#10;// your code&#10;<\/script>">${item.html||''}</textarea>
       </div>
     </div>`:''}
     <div class="section-card" id="sec-eparams">
@@ -1135,7 +1146,7 @@ function renderTagEditor(item){
 }
 
 function tagTypeLabel(t){
-  const m={googtag:'GA4 / Google Tag',html:'Custom HTML',awct:'Google Ads Conversion',sp:'Google Ads Remarketing',ua:'Universal Analytics',floodlight:'Floodlight',gclidw:'Conversion Linker',baut:'Bounce Alteration',img:'Custom Image',mdn:'Metadata'};
+  const m={googtag:'GA4 / Google Tag',html:'Custom HTML',awct:'Google Ads Conversion',sp:'Google Ads Remarketing',ua:'Universal Analytics',floodlight:'Floodlight',gclidw:'Conversion Linker',img:'Custom Image'};
   return m[t]||t;
 }
 
@@ -1290,11 +1301,11 @@ function renderVarEditor(item){
           ${vtype==='DLV'?`<div class="form-group" style="margin:0"><label class="form-label">Data Layer Key</label><input class="form-input" id="ef-dlKey" value="${item.dlKey||''}" placeholder="ecommerce.purchase.value" oninput="getActiveItem().dlKey=this.value"/></div>`:''}
           ${vtype==='CONST'?`<div class="form-group" style="margin:0"><label class="form-label">Constant Value</label><input class="form-input" id="ef-constVal" value="${item.constValue||''}" placeholder="constant value" oninput="getActiveItem().constValue=this.value"/></div>`:''}
           ${vtype==='JS'?`<div class="form-group" style="margin:0"><label class="form-label">JavaScript Variable</label><input class="form-input" id="ef-jsVar" value="${item.jsVar||''}" placeholder="document.title" oninput="getActiveItem().jsVar=this.value"/></div>`:''}
-          ${vtype==='URL'?`<div class="form-group" style="margin:0"><label class="form-label">URL Component</label><select class="form-select" id="ef-urlComp" onchange="getActiveItem().varComponent=this.value"><option value="URL" ${(item.varComponent||'')==='URL'?'selected':''}>Full URL</option><option value="PATH" ${item.varComponent==='PATH'?'selected':''}>Path</option><option value="HOST" ${item.varComponent==='HOST'?'selected':''}>Hostname</option><option value="QUERY" ${item.varComponent==='QUERY'?'selected':''}>Query String</option><option value="FRAGMENT" ${item.varComponent==='FRAGMENT'?'selected':''}>Fragment</option><option value="PROTOCOL" ${item.varComponent==='PROTOCOL'?'selected':''}>Protocol</option></select></div>`:''}
+          ${vtype==='URL'?`<div class="form-group" style="margin:0"><label class="form-label">URL Component</label><select class="form-select" id="ef-urlComp" onchange="getActiveItem().varComponent=this.value"><option value="URL" ${(item.varComponent||'')==='URL'?'selected':''}>Full URL</option><option value="PATH" ${item.varComponent==='PATH'?'selected':''}>Path</option><option value="HOST" ${item.varComponent==='HOST'?'selected':''}>Hostname</option><option value="QUERY" ${item.varComponent==='QUERY'?'selected':''}>Query String</option><option value="FRAGMENT" ${item.varComponent==='FRAGMENT'?'selected':''}>Fragment</option></select></div>`:''}
           ${vtype==='AUTO'?`<div class="form-group" style="margin:0"><label class="form-label">Auto Variable</label><select class="form-select" id="ef-autoVar" onchange="getActiveItem().autoVar=this.value">${AUTO_VARS.map(v=>`<option value="${v}" ${item.autoVar===v?'selected':''}>${v}</option>`).join('')}</select></div>`:''}
         </div>
         ${vtype==='REGEXM'?`<div class="form-group"><label class="form-label">Pattern</label><input class="form-input" id="ef-regexPattern" value="${item.regexPattern||''}" placeholder="regex pattern" oninput="getActiveItem().regexPattern=this.value"/></div>`:''}
-        ${vtype==='CTXD'?`<div class="form-group"><label class="form-label">Cookie Name</label><input class="form-input" id="ef-cookieName" value="${item.cookieName||''}" placeholder="cookie_name" oninput="getActiveItem().cookieName=this.value"/></div>`:''}
+        ${vtype==='CTXD'||vtype==='AEVMD'?`<div class="form-group"><label class="form-label">Cookie Name</label><input class="form-input" id="ef-cookieName" value="${item.cookieName||''}" placeholder="cookie_name" oninput="getActiveItem().cookieName=this.value"/></div>`:''}
         ${vtype==='SMREF'?`<div class="form-group"><label class="form-label">Lookup Table — <span style="color:var(--muted)">Input Variable → Output Value</span></label><div id="ef-lookup-wrap"></div><button class="add-row-btn" onclick="addLookupRow()">+ Add Row</button></div>`:''}
       </div>
     </div>
@@ -1335,7 +1346,7 @@ function renderVarEditor(item){
 }
 
 function varTypeLabel(t){
-  const m={DLV:'Data Layer Variable',URL:'URL',AEVMD:'1st Party Cookie',AUTO:'Auto-Event Variable',CONST:'Constant',JS:'JavaScript Variable',SMREF:'Lookup Table',REGEXM:'RegEx Table',MK:'HTTP Referrer',CTXD:'Cookie',UNDEF:'Undefined Value'};
+  const m={DLV:'Data Layer Variable',URL:'URL',AUTO:'Auto-Event Variable',CONST:'Constant',JS:'JavaScript Variable',SMREF:'Lookup Table',REGEXM:'RegEx Table',CTXD:'Cookie',AEVMD:'1st Party Cookie',UNDEF:'Undefined Value'};
   return m[t]||t;
 }
 
@@ -1436,16 +1447,20 @@ function duplicateItem(){
 // TEMPLATES
 // ══════════════════════════════════════════════════════════════
 function renderTemplates(){
+  const categories=[{id:'all',label:'All Templates',icon:'📋'},...APP.templateCategories];
   // categories sidebar
   const catEl=document.getElementById('templateCategories');
   catEl.innerHTML=`<div class="sidebar-label" style="margin-bottom:8px">Categories</div>`+
-    TEMPLATE_CATEGORIES.map(c=>`<div class="template-cat-item ${APP.activeTemplateCategory===c.id?'active':''}" onclick="setTemplateCategory('${c.id}')">${c.icon} ${c.label}</div>`).join('');
+    categories.map(c=>`<div class="template-cat-item ${APP.activeTemplateCategory===c.id?'active':''}" onclick="setTemplateCategory('${c.id}')">
+      <span>${c.icon} ${c.label}</span>
+      ${c.id!=='all' && !DEFAULT_TEMPLATE_CATEGORY_IDS.has(c.id)?`<button class="btn btn-danger btn-xs" style="margin-left:auto" onclick="event.stopPropagation();removeTemplateCategory('${c.id}')">×</button>`:''}
+    </div>`).join('');
 
   // grid
   const grid=document.getElementById('templatesGrid');
   const cat=APP.activeTemplateCategory;
   const items=cat==='all'?APP.templates:APP.templates.filter(t=>t.cat===cat);
-  const catInfo=TEMPLATE_CATEGORIES.find(c=>c.id===cat);
+  const catInfo=categories.find(c=>c.id===cat);
   document.getElementById('templateCatTitle').textContent=catInfo?catInfo.label+' Templates':'Templates';
   document.getElementById('templateCatSub').textContent=`${items.length} template${items.length!==1?'s':''}`;
 
@@ -1485,13 +1500,14 @@ function useTemplate(id){
 }
 
 function openAddTemplateModal(){
+  const categories=APP.templateCategories.length?APP.templateCategories:DEFAULT_TEMPLATE_CATEGORIES;
   renderModal('Add New Template',`
     <div class="form-row cols-2">
       <div class="form-group" style="margin:0"><label class="form-label">Template Name</label><input class="form-input" id="nt-name" placeholder="e.g. GA4 Add to Cart"/></div>
       <div class="form-group" style="margin:0">
         <label class="form-label">Category</label>
         <select class="form-select" id="nt-cat">
-          ${TEMPLATE_CATEGORIES.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}
+          ${categories.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -1532,11 +1548,12 @@ function addTemplate(){
 
 function editTemplate(id){
   const t=APP.templates.find(x=>x.id===id);
+  const categories=APP.templateCategories.length?APP.templateCategories:DEFAULT_TEMPLATE_CATEGORIES;
   renderModal('Edit Template',`
     <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="et-name" value="${t.name}"/></div>
     <div class="form-row cols-2">
       <div class="form-group" style="margin:0"><label class="form-label">Category</label>
-        <select class="form-select" id="et-cat">${TEMPLATE_CATEGORIES.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}" ${t.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select>
+        <select class="form-select" id="et-cat">${categories.map(c=>`<option value="${c.id}" ${t.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select>
       </div>
       <div class="form-group" style="margin:0"><label class="form-label">Icon</label><input class="form-input" id="et-icon" value="${t.icon||''}"/></div>
     </div>
@@ -1561,6 +1578,51 @@ function deleteTemplate(id){
   if(!confirm('Delete this template?'))return;
   APP.templates=APP.templates.filter(t=>t.id!==id);
   saveTemplates();renderTemplates();toast('Template deleted','info');
+}
+
+function openAddCategoryModal(){
+  renderModal('Add Template Category',`
+    <div class="form-group">
+      <label class="form-label">Category Label</label>
+      <input class="form-input" id="nc-label" placeholder="e.g. Ecommerce"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Icon (emoji)</label>
+      <input class="form-input" id="nc-icon" placeholder="🛍️" maxlength="4"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="addTemplateCategory()">Add Category</button>
+    </div>
+  `);
+}
+
+function addTemplateCategory(){
+  const label=document.getElementById('nc-label').value.trim();
+  if(!label){toast('Category name required','error');return;}
+  const id=label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(!id){toast('Invalid category name','error');return;}
+  if(APP.templateCategories.some(c=>c.id===id)){toast('Category already exists','error');return;}
+  APP.templateCategories.push({id,label,icon:document.getElementById('nc-icon').value||'📁'});
+  saveTemplateCategories();
+  APP.activeTemplateCategory=id;
+  closeModal();
+  renderTemplates();
+  toast('Category added','success');
+}
+
+function removeTemplateCategory(id){
+  if(DEFAULT_TEMPLATE_CATEGORY_IDS.has(id)){toast('Default categories cannot be removed','error');return;}
+  const cat=APP.templateCategories.find(c=>c.id===id);
+  if(!cat){toast('Category not found','error');return;}
+  if(!confirm(`Delete category "${cat.label}"? Templates in this category will move to GA4.`)) return;
+  APP.templateCategories=APP.templateCategories.filter(c=>c.id!==id);
+  APP.templates=APP.templates.map(t=>t.cat===id?{...t,cat:'ga4'}:t);
+  if(APP.activeTemplateCategory===id) APP.activeTemplateCategory='all';
+  saveTemplateCategories();
+  saveTemplates();
+  renderTemplates();
+  toast('Category deleted','info');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1656,7 +1718,7 @@ function buildVarParameters(v){
     p.push({type:'template',key:'component',value:v.varComponent||'URL'});
   } else if(v.varType==='AUTO'){
     p.push({type:'template',key:'varType',value:v.autoVar||'CLICK_TEXT'});
-  } else if(v.varType==='CTXD'){
+  } else if(v.varType==='CTXD' || v.varType==='AEVMD'){
     p.push({type:'template',key:'name',value:v.cookieName||''});
   } else if(v.varType==='REGEXM'){
     p.push({type:'template',key:'inputVariable',value:v.regexInput||''});
@@ -1805,6 +1867,14 @@ function toast(msg,type='success'){
 // INIT
 // ══════════════════════════════════════════════════════════════
 function init(){
+  // Ensure default categories are always available even if localStorage is stale.
+  const storedCats=(JSON.parse(localStorage.getItem('gtm_template_categories')||'[]')||[])
+    .filter(c=>c && c.id);
+  const storedById=new Map(storedCats.map(c=>[c.id,c]));
+  const mergedDefaults=DEFAULT_TEMPLATE_CATEGORIES.map(c=>storedById.get(c.id)||c);
+  const customCats=storedCats.filter(c=>!DEFAULT_TEMPLATE_CATEGORY_IDS.has(c.id));
+  APP.templateCategories=[...mergedDefaults,...customCats.filter(c=>!mergedDefaults.some(x=>x.id===c.id))];
+  saveTemplateCategories();
   renderContainers();
   // Restore API creds display
   if(APP.apiCreds.clientId){
