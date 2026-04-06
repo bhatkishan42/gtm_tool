@@ -3,1862 +3,1235 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GTM Workspace</title>
-<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<title>GTM Tag Automator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Clash+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#08090c;
-  --s1:#0e1016;
-  --s2:#141720;
-  --s3:#1c2030;
-  --s4:#242840;
-  --border:#1e2235;
-  --border2:#2a2f48;
-  --text:#e2e4f0;
-  --muted:#9096b8;
-  --dim:#4a5070;
-  --accent:#5b7fff;
-  --accent-glow:rgba(91,127,255,0.15);
-  --accent-border:rgba(91,127,255,0.35);
-  --green:#3ecf8e;
-  --green-dim:rgba(62,207,142,0.1);
-  --yellow:#f5c542;
-  --yellow-dim:rgba(245,197,66,0.1);
-  --red:#f06090;
-  --red-dim:rgba(240,96,144,0.1);
-  --orange:#ff9966;
-  --purple:#b06aff;
-  --cyan:#3ecfcf;
-  --tag-color:#5b7fff;
-  --trigger-color:#3ecf8e;
-  --var-color:#f5c542;
+  --bg:#0d0d0f;
+  --s1:#131316;
+  --s2:#1a1a1f;
+  --s3:#222228;
+  --border:#2a2a32;
+  --border2:#353540;
+  --text:#f0f0f5;
+  --muted:#7070880;
+  --dim:#505060;
+  --accent:#e8ff47;
+  --accent-dim:rgba(232,255,71,0.12);
+  --accent-border:rgba(232,255,71,0.3);
+  --blue:#4f8dff;
+  --blue-dim:rgba(79,141,255,0.1);
+  --green:#00e5a0;
+  --green-dim:rgba(0,229,160,0.1);
+  --red:#ff5f5f;
+  --orange:#ff9f47;
 }
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;font-size:14px;display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;min-height:100vh;overflow-x:hidden}
 
-/* ── TOPBAR ── */
-.topbar{
-  height:52px;background:var(--s1);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:200;
-}
-.app-logo{
-  font-family:'Geist Mono',monospace;font-weight:700;font-size:15px;
-  display:flex;align-items:center;gap:8px;white-space:nowrap;
-}
-.logo-pill{
-  background:var(--accent);color:#fff;font-size:10px;font-weight:700;
-  padding:2px 7px;border-radius:4px;letter-spacing:.5px;
-}
-.container-breadcrumb{
-  display:flex;align-items:center;gap:6px;
-  font-size:12px;color:var(--muted);margin-left:8px;
-}
-.breadcrumb-sep{color:var(--dim)}
-.breadcrumb-container{
-  background:var(--s3);border:1px solid var(--border2);
-  border-radius:5px;padding:3px 10px;color:var(--text);font-size:12px;
-  cursor:pointer;display:flex;align-items:center;gap:6px;
-}
-.breadcrumb-container:hover{border-color:var(--accent-border)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.btn{
-  padding:6px 14px;border-radius:6px;font-family:'Geist',sans-serif;font-size:12px;
-  font-weight:500;cursor:pointer;border:none;transition:all .15s;
-}
-.btn-accent{background:var(--accent);color:#fff}
-.btn-accent:hover{background:#7090ff;box-shadow:0 0 12px rgba(91,127,255,.3)}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2)}
-.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
-.btn-green{background:var(--green);color:#000}
-.btn-green:hover{background:#5fe0a8}
-.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(240,96,144,.25)}
-.btn-danger:hover{background:var(--red-dim)}
-.btn-sm{padding:4px 10px;font-size:11px}
-.btn-xs{padding:3px 8px;font-size:10px}
-
-/* ── MAIN LAYOUT ── */
-.app-body{display:flex;flex:1;overflow:hidden}
-
-/* ── SIDEBAR ── */
-.sidebar{
-  width:220px;background:var(--s1);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;
-}
-.sidebar-section{padding:16px 12px 8px}
-.sidebar-label{
-  font-size:10px;font-weight:600;color:var(--dim);
-  text-transform:uppercase;letter-spacing:1.5px;padding:0 6px;margin-bottom:6px;
-}
-.nav-item{
-  display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;
-  cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;margin-bottom:2px;
-}
-.nav-item:hover{background:var(--s2);color:var(--text)}
-.nav-item.active{background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent-border)}
-.nav-item .nav-icon{width:18px;text-align:center;font-size:14px;flex-shrink:0}
-.nav-badge{
-  margin-left:auto;background:var(--s3);color:var(--muted);
-  font-size:10px;padding:1px 6px;border-radius:10px;font-family:'Geist Mono',monospace;
-}
-.nav-item.active .nav-badge{background:var(--accent-glow);color:var(--accent)}
-
-.sidebar-divider{height:1px;background:var(--border);margin:8px 12px}
-
-/* ── CONTENT AREA ── */
-.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
-
-/* ── SCREENS ── */
-.screen{display:none;flex:1;overflow:hidden;flex-direction:column}
-.screen.active{display:flex}
-
-/* ── CONTAINERS SCREEN ── */
-.containers-screen{padding:32px;overflow-y:auto}
-.screen-header{margin-bottom:28px}
-.screen-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
-.screen-sub{font-size:13px;color:var(--muted)}
-.containers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.container-card{
-  background:var(--s2);border:1px solid var(--border);border-radius:12px;
-  padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
-}
-.container-card::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(91,127,255,.04),transparent);
-  opacity:0;transition:opacity .2s;
-}
-.container-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.container-card:hover::before{opacity:1}
-.container-card.add-new{
-  border-style:dashed;border-color:var(--border2);
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:8px;color:var(--dim);min-height:140px;
-}
-.container-card.add-new:hover{border-color:var(--accent-border);color:var(--accent)}
-.cc-icon{font-size:28px;margin-bottom:6px}
-.cc-name{font-size:16px;font-weight:600;margin-bottom:4px}
-.cc-id{font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:12px}
-.cc-stats{display:flex;gap:12px}
-.cc-stat{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px}
-.cc-stat-dot{width:6px;height:6px;border-radius:50%}
-.cc-actions{
-  display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
+/* NOISE TEXTURE */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.4;
 }
 
-/* ── WORKSPACE (tags/triggers/vars) ── */
-.workspace-layout{display:flex;flex:1;overflow:hidden}
-.item-list-panel{
-  width:300px;border-right:1px solid var(--border);
-  display:flex;flex-direction:column;flex-shrink:0;
+/* HEADER */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,13,15,0.9);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  padding:0 32px;
+  height:60px;
+  display:flex;align-items:center;gap:20px;
 }
-.panel-header{
-  padding:14px 16px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:8px;flex-shrink:0;
+.logo{
+  font-family:'IBM Plex Mono',monospace;
+  font-weight:600;font-size:15px;
+  display:flex;align-items:center;gap:10px;
 }
-.panel-title{font-size:13px;font-weight:600;flex:1}
-.item-search{
-  padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;
+.logo-mark{
+  background:var(--accent);
+  color:#000;font-weight:700;
+  font-size:11px;padding:3px 8px;
+  border-radius:4px;letter-spacing:1px;
 }
-.search-input{
-  width:100%;background:var(--s2);border:1px solid var(--border);
-  border-radius:6px;padding:7px 10px;color:var(--text);font-family:'Geist',sans-serif;
-  font-size:12px;outline:none;
-}
-.search-input:focus{border-color:var(--accent-border)}
-.search-input::placeholder{color:var(--dim)}
-.items-list{flex:1;overflow-y:auto;padding:8px}
-.item-row{
-  padding:10px 12px;border-radius:8px;cursor:pointer;
-  border:1px solid transparent;transition:all .15s;margin-bottom:3px;
-}
-.item-row:hover{background:var(--s2);border-color:var(--border)}
-.item-row.active{background:var(--accent-glow);border-color:var(--accent-border)}
-.item-row-name{font-size:13px;font-weight:500;margin-bottom:3px;display:flex;align-items:center;gap:6px}
-.item-row-meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px}
-.item-type-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.type-dot-tag{background:var(--tag-color)}
-.type-dot-trigger{background:var(--trigger-color)}
-.type-dot-var{background:var(--var-color)}
-
-/* ── EDITOR ── */
-.editor-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.editor-empty{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:10px;color:var(--dim);
-}
-.editor-empty-icon{font-size:40px;opacity:.4}
-.editor-form{flex:1;overflow-y:auto;padding:24px 28px}
-.editor-topbar{
-  padding:12px 20px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
-}
-.editor-name-input{
-  flex:1;background:transparent;border:none;color:var(--text);
-  font-family:'Geist',sans-serif;font-size:16px;font-weight:600;
-  outline:none;
-}
-.editor-name-input::placeholder{color:var(--dim)}
-
-/* ── FORM ELEMENTS ── */
-.form-group{margin-bottom:20px}
-.form-label{
-  display:block;font-size:11px;font-weight:600;color:var(--muted);
-  text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;
-}
-.form-input,.form-select,.form-textarea{
-  width:100%;background:var(--s2);border:1px solid var(--border);
-  border-radius:7px;color:var(--text);font-family:'Geist',sans-serif;font-size:13px;
-  padding:9px 12px;outline:none;transition:border-color .15s;
-}
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent-border)}
-.form-select option{background:#141720}
-.form-textarea{resize:vertical;min-height:80px;font-family:'Geist Mono',monospace;font-size:12px;line-height:1.6}
-.form-row{display:grid;gap:14px;margin-bottom:20px}
-.form-row.cols-2{grid-template-columns:1fr 1fr}
-.form-row.cols-3{grid-template-columns:1fr 1fr 1fr}
-
-/* ── KV TABLE ── */
-.kv-table{width:100%;border-collapse:collapse}
-.kv-head th{
-  text-align:left;font-size:10px;color:var(--dim);text-transform:uppercase;
-  letter-spacing:1px;padding:6px 8px;border-bottom:1px solid var(--border);font-weight:600;
-}
-.kv-row td{padding:4px 4px}
-.kv-input{
-  width:100%;background:var(--s2);border:1px solid var(--border);
-  border-radius:5px;color:var(--text);font-family:'Geist Mono',monospace;
-  font-size:12px;padding:6px 8px;outline:none;transition:border-color .15s;
-}
-.kv-input:focus{border-color:var(--accent-border)}
-.kv-select{
-  width:100%;background:var(--s2);border:1px solid var(--border);
-  border-radius:5px;color:var(--text);font-family:'Geist Mono',monospace;
-  font-size:11px;padding:6px 6px;outline:none;
-}
-.remove-row-btn{
-  width:26px;height:26px;border-radius:4px;background:transparent;
-  border:1px solid var(--border);color:var(--dim);cursor:pointer;
-  font-size:14px;display:flex;align-items:center;justify-content:center;
+.nav-tabs{display:flex;gap:2px;margin-left:24px;}
+.nav-tab{
+  padding:6px 14px;border-radius:6px;
+  font-size:12px;cursor:pointer;
+  color:var(--dim);border:none;
+  background:transparent;font-family:'IBM Plex Mono',monospace;
   transition:all .15s;
 }
-.remove-row-btn:hover{background:var(--red-dim);border-color:var(--red);color:var(--red)}
-.add-row-btn{
-  background:transparent;border:1px dashed var(--border2);border-radius:5px;
-  color:var(--dim);font-family:'Geist',sans-serif;font-size:11px;
-  padding:6px 12px;cursor:pointer;transition:all .15s;margin-top:8px;
+.nav-tab:hover{color:var(--text);background:var(--s2);}
+.nav-tab.active{color:var(--accent);background:var(--accent-dim);}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.site-selector{
+  background:var(--s2);border:1px solid var(--border);
+  color:var(--text);font-family:'IBM Plex Mono',monospace;
+  font-size:12px;padding:6px 12px;border-radius:6px;
+  outline:none;cursor:pointer;
 }
-.add-row-btn:hover{border-color:var(--accent-border);color:var(--accent)}
+.site-selector:focus{border-color:var(--accent);}
+.btn{
+  padding:7px 16px;border-radius:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  font-weight:600;cursor:pointer;border:none;
+  transition:all .15s;letter-spacing:.3px;
+}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#f5ff70;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,95,95,0.2);}
+.btn-danger:hover{background:rgba(255,95,95,0.08);}
 
-/* ── SECTION CARD ── */
-.section-card{
+/* LAYOUT */
+.page{display:none;animation:fadeIn .2s ease;}
+.page.active{display:flex;flex-direction:column;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.workspace{
+  display:grid;
+  grid-template-columns:280px 1fr 320px;
+  min-height:calc(100vh - 60px);
+  position:relative;z-index:1;
+}
+
+/* SIDEBAR */
+.sidebar{
+  border-right:1px solid var(--border);
+  background:var(--s1);
+  overflow-y:auto;
+}
+.sidebar-section{padding:16px;}
+.sidebar-label{
+  font-size:10px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:2px;
+  margin-bottom:10px;
+}
+.template-item{
+  padding:10px 12px;border-radius:8px;
+  cursor:pointer;border:1px solid transparent;
+  transition:all .15s;margin-bottom:4px;
+}
+.template-item:hover{background:var(--s2);border-color:var(--border);}
+.template-item.active{background:var(--accent-dim);border-color:var(--accent-border);}
+.template-item .t-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.template-item .t-desc{font-size:11px;color:var(--dim);}
+.template-item.active .t-name{color:var(--accent);}
+.tag-type-badge{
+  display:inline-block;font-size:9px;font-weight:600;
+  padding:2px 6px;border-radius:3px;margin-bottom:6px;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+.badge-ga4{background:rgba(255,159,71,0.15);color:var(--orange);}
+.badge-meta{background:rgba(79,141,255,0.15);color:var(--blue);}
+.badge-gads{background:rgba(0,229,160,0.15);color:var(--green);}
+.badge-html{background:rgba(232,255,71,0.15);color:var(--accent);}
+
+/* MAIN FORM */
+.main-form{padding:28px 32px;overflow-y:auto;}
+.form-header{margin-bottom:28px;}
+.form-title{
+  font-size:22px;font-weight:700;
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:-0.5px;margin-bottom:6px;
+}
+.form-subtitle{font-size:12px;color:var(--dim);}
+
+.form-section{
   background:var(--s1);border:1px solid var(--border);
-  border-radius:10px;margin-bottom:14px;overflow:hidden;
+  border-radius:12px;margin-bottom:16px;overflow:hidden;
 }
-.section-card-header{
-  padding:12px 16px;display:flex;align-items:center;gap:8px;
-  cursor:pointer;user-select:none;transition:background .15s;
+.form-section-header{
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;
 }
-.section-card-header:hover{background:var(--s2)}
-.section-card-title{font-size:13px;font-weight:600;flex:1}
-.section-card-sub{font-size:11px;color:var(--muted)}
-.chevron{color:var(--dim);font-size:11px;transition:transform .2s}
-.section-card.collapsed .chevron{transform:rotate(-90deg)}
-.section-card.collapsed .section-card-body{display:none}
-.section-card-body{padding:16px}
+.form-section-header:hover{background:var(--s2);}
+.section-title-row{display:flex;align-items:center;gap:10px;}
+.section-icon{font-size:16px;}
+.section-name{font-size:13px;font-weight:600;}
+.section-tag{font-size:10px;color:var(--dim);margin-left:4px;}
+.collapse-arrow{color:var(--dim);font-size:12px;transition:transform .2s;}
+.collapsed .collapse-arrow{transform:rotate(-90deg);}
+.form-section-body{padding:18px;}
+.form-section.collapsed .form-section-body{display:none;}
 
-/* ── TRIGGER CONDITION BUILDER ── */
-.condition-row{
-  display:grid;grid-template-columns:160px 120px 1fr 28px;
-  gap:6px;margin-bottom:6px;align-items:center;
+/* FIELDS */
+.field-row{display:grid;gap:12px;margin-bottom:12px;}
+.field-row.cols-2{grid-template-columns:1fr 1fr;}
+.field-row.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{
+  font-size:10px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:1.5px;
 }
-.logic-toggle{
-  display:inline-flex;background:var(--s3);border:1px solid var(--border2);
-  border-radius:5px;overflow:hidden;margin-bottom:8px;
+.field input,.field select,.field textarea{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:7px;color:var(--text);
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  padding:9px 12px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  width:100%;
 }
-.logic-btn{
-  padding:4px 12px;font-size:11px;font-family:'Geist Mono',monospace;
-  cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .15s;
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px var(--accent-dim);
 }
-.logic-btn.active{background:var(--accent);color:#fff}
+.field select option{background:#1a1a1f;}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5;}
+.field-hint{font-size:10px;color:var(--dim);margin-top:3px;}
 
-/* ── TEMPLATES SCREEN ── */
-.templates-screen{flex:1;display:flex;overflow:hidden}
-.template-categories{
-  width:200px;border-right:1px solid var(--border);padding:14px;flex-shrink:0;
+/* PARAMS TABLE */
+.params-wrap{overflow:hidden;}
+.params-head{
+  display:grid;gap:8px;
+  padding:7px 10px;
+  background:var(--s2);border-radius:6px;
+  margin-bottom:6px;
+  font-size:10px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:1px;
 }
-.template-cat-item{
-  padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;
-  color:var(--muted);margin-bottom:2px;transition:all .15s;display:flex;align-items:center;gap:8px;
+.params-head.cols-3{grid-template-columns:1fr 1fr 28px;}
+.params-head.cols-4{grid-template-columns:180px 1fr 100px 28px;}
+.param-row{
+  display:grid;gap:8px;
+  margin-bottom:6px;align-items:center;
 }
-.template-cat-item:hover{background:var(--s2);color:var(--text)}
-.template-cat-item.active{background:var(--accent-glow);color:var(--accent)}
-.templates-list-panel{flex:1;overflow-y:auto;padding:20px}
-.templates-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.template-card{
-  background:var(--s2);border:1px solid var(--border);border-radius:10px;
-  padding:16px;cursor:pointer;transition:all .15s;
+.param-row.cols-3{grid-template-columns:1fr 1fr 28px;}
+.param-row.cols-4{grid-template-columns:180px 1fr 100px 28px;}
+.param-input{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  padding:7px 10px;outline:none;width:100%;
+  transition:border-color .15s;
 }
-.template-card:hover{border-color:var(--border2);transform:translateY(-1px)}
-.template-card.add-new{
-  border-style:dashed;border-color:var(--border2);
+.param-input:focus{border-color:var(--accent);}
+.param-select{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  padding:7px 8px;outline:none;width:100%;
+  transition:border-color .15s;
+}
+.param-select:focus{border-color:var(--accent);}
+.remove-btn{
+  width:28px;height:28px;border-radius:5px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--dim);cursor:pointer;font-size:14px;
   display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:6px;color:var(--dim);min-height:100px;
+  transition:all .15s;flex-shrink:0;
 }
-.template-card.add-new:hover{border-color:var(--accent-border);color:var(--accent)}
-.tc-type{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-.tc-name{font-size:14px;font-weight:600;margin-bottom:4px}
-.tc-desc{font-size:11px;color:var(--muted);margin-bottom:10px}
-.tc-tags{display:flex;flex-wrap:wrap;gap:4px}
-.tc-tag{
-  font-size:10px;padding:2px 7px;border-radius:3px;
-  font-family:'Geist Mono',monospace;
+.remove-btn:hover{background:rgba(255,95,95,0.1);border-color:var(--red);color:var(--red);}
+.add-param-btn{
+  background:transparent;border:1px dashed var(--border2);
+  border-radius:6px;color:var(--dim);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  padding:7px 14px;cursor:pointer;width:100%;
+  transition:all .15s;margin-top:4px;
 }
+.add-param-btn:hover{border-color:var(--accent);color:var(--accent);}
 
-/* ── API SCREEN ── */
-.api-screen{flex:1;overflow-y:auto;padding:32px}
-.api-card{
-  background:var(--s2);border:1px solid var(--border);border-radius:10px;
-  padding:20px;margin-bottom:16px;max-width:700px;
+/* TRIGGERS */
+.trigger-types{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.trigger-type-btn{
+  padding:6px 12px;border-radius:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  cursor:pointer;border:1px solid var(--border);
+  background:var(--s2);color:var(--dim);
+  transition:all .15s;
 }
-.api-card-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.api-status{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:11px;padding:3px 8px;border-radius:10px;
-}
-.status-connected{background:var(--green-dim);color:var(--green)}
-.status-disconnected{background:rgba(240,96,144,.1);color:var(--red)}
-.api-note{
-  background:rgba(245,197,66,.07);border:1px solid rgba(245,197,66,.2);
-  border-radius:7px;padding:12px 14px;font-size:12px;color:var(--yellow);
-  margin-bottom:16px;line-height:1.6;
-}
+.trigger-type-btn:hover{border-color:var(--border2);color:var(--text);}
+.trigger-type-btn.active{background:var(--blue-dim);border-color:rgba(79,141,255,0.4);color:var(--blue);}
 
-/* ── MODAL ── */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
-  z-index:1000;display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;transition:opacity .2s;
+.trigger-block{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;padding:14px;margin-bottom:8px;
 }
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal{
-  background:var(--s2);border:1px solid var(--border2);border-radius:14px;
-  padding:28px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;
-  transform:translateY(12px);transition:transform .2s;
+.trigger-block-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
 }
-.modal-overlay.open .modal{transform:translateY(0)}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:4px}
-.modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.trigger-block-title{font-size:12px;font-weight:600;color:var(--text);}
+.condition-row{
+  display:grid;grid-template-columns:140px 100px 1fr 28px;
+  gap:8px;margin-bottom:6px;align-items:center;
+}
+.add-condition-btn{
+  background:transparent;border:1px dashed var(--border);
+  border-radius:5px;color:var(--dim);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  padding:5px 10px;cursor:pointer;
+  transition:all .15s;
+}
+.add-condition-btn:hover{border-color:var(--blue);color:var(--blue);}
+.logic-badge{
+  font-size:10px;background:var(--s3);
+  border:1px solid var(--border);
+  padding:2px 8px;border-radius:4px;
+  color:var(--dim);cursor:pointer;
+}
+.logic-badge:hover{color:var(--accent);}
 
-/* ── TOAST ── */
+/* PREVIEW PANEL */
+.preview-panel{
+  border-left:1px solid var(--border);
+  background:var(--s1);
+  display:flex;flex-direction:column;
+}
+.preview-header{
+  padding:16px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.preview-title{font-size:12px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+.preview-actions{display:flex;gap:6px;}
+.preview-body{flex:1;overflow-y:auto;padding:16px;}
+.json-output{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;padding:14px;
+  font-size:11px;line-height:1.7;
+  white-space:pre-wrap;word-break:break-all;
+  color:#a0a0b8;max-height:none;
+}
+.json-key{color:var(--blue);}
+.json-string{color:var(--green);}
+.json-number{color:var(--orange);}
+.json-bool{color:var(--accent);}
+
+.summary-card{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;padding:14px;margin-bottom:10px;
+}
+.summary-row{
+  display:flex;justify-content:space-between;
+  font-size:11px;margin-bottom:6px;
+}
+.summary-row:last-child{margin-bottom:0;}
+.summary-label{color:var(--dim);}
+.summary-val{color:var(--text);text-align:right;max-width:60%;}
+.status-dot{
+  display:inline-block;width:7px;height:7px;
+  border-radius:50%;margin-right:5px;
+}
+.dot-green{background:var(--green);}
+.dot-orange{background:var(--orange);}
+.dot-red{background:var(--red);}
+
+/* SITES PAGE */
+.sites-page{padding:32px;max-width:900px;margin:0 auto;position:relative;z-index:1;}
+.page-header{margin-bottom:28px;}
+.page-h{font-size:20px;font-weight:700;margin-bottom:4px;}
+.page-sub{font-size:12px;color:var(--dim);}
+.sites-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;}
+.site-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:10px;padding:18px;cursor:pointer;
+  transition:all .15s;
+}
+.site-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.site-card.selected{border-color:var(--accent-border);background:var(--accent-dim);}
+.site-name{font-size:14px;font-weight:600;margin-bottom:4px;}
+.site-id{font-size:10px;color:var(--dim);margin-bottom:10px;}
+.site-tags-count{font-size:11px;color:var(--dim);}
+.site-type-badge{
+  display:inline-block;font-size:9px;padding:2px 7px;
+  border-radius:3px;margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.type-simple{background:rgba(0,229,160,0.1);color:var(--green);}
+.type-datalayer{background:rgba(79,141,255,0.1);color:var(--blue);}
+.type-spa{background:rgba(232,255,71,0.1);color:var(--accent);}
+
+/* ADD SITE FORM */
+.add-site-form{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:10px;padding:20px;
+}
+.add-site-title{font-size:13px;font-weight:600;margin-bottom:16px;}
+
+/* HISTORY PAGE */
+.history-page{padding:32px;max-width:900px;margin:0 auto;position:relative;z-index:1;}
+.history-item{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:10px;padding:16px 20px;margin-bottom:10px;
+  display:flex;align-items:center;gap:16px;cursor:pointer;
+  transition:all .15s;
+}
+.history-item:hover{border-color:var(--border2);}
+.history-icon{font-size:20px;flex-shrink:0;}
+.history-info{flex:1;}
+.history-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+.history-meta{font-size:11px;color:var(--dim);}
+.history-actions{display:flex;gap:6px;}
+
+/* TOAST */
 .toast{
-  position:fixed;bottom:20px;right:20px;z-index:2000;
-  background:var(--s3);border:1px solid var(--border2);border-radius:8px;
-  padding:10px 16px;font-size:12px;display:flex;align-items:center;gap:8px;
-  transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);
-  pointer-events:none;max-width:320px;
-}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.success{border-color:rgba(62,207,142,.3);color:var(--green)}
-.toast.error{border-color:rgba(240,96,144,.3);color:var(--red)}
-.toast.info{border-color:rgba(91,127,255,.3);color:var(--accent)}
-
-/* ── TYPE BADGES ── */
-.type-badge{
-  display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;
-  border-radius:3px;text-transform:uppercase;letter-spacing:.5px;font-family:'Geist Mono',monospace;
-}
-.badge-tag{background:rgba(91,127,255,.15);color:var(--accent)}
-.badge-trigger{background:rgba(62,207,142,.15);color:var(--green)}
-.badge-var{background:rgba(245,197,66,.15);color:var(--yellow)}
-.badge-html{background:rgba(240,96,144,.15);color:var(--red)}
-.badge-ga4{background:rgba(255,153,102,.15);color:var(--orange)}
-.badge-gads{background:rgba(62,207,207,.15);color:var(--cyan)}
-
-/* ── EXPORT PANEL ── */
-.export-bar{
-  padding:10px 16px;background:var(--s1);border-top:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
-}
-.export-name-input{
-  background:var(--s2);border:1px solid var(--border);border-radius:6px;
-  color:var(--text);font-family:'Geist Mono',monospace;font-size:12px;
-  padding:6px 10px;outline:none;width:220px;
-}
-.export-name-input:focus{border-color:var(--accent-border)}
-.export-stats{font-size:11px;color:var(--muted);display:flex;gap:12px;margin-left:4px}
-.export-stat{display:flex;align-items:center;gap:4px}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-::-webkit-scrollbar-thumb:hover{background:var(--dim)}
-
-/* ── MISC ── */
-.tag-pill{
-  display:inline-flex;align-items:center;gap:4px;
+  position:fixed;bottom:24px;right:24px;
   background:var(--s3);border:1px solid var(--border2);
-  border-radius:4px;padding:3px 8px;font-size:11px;
-  color:var(--muted);cursor:pointer;transition:all .15s;
+  border-radius:8px;padding:12px 18px;
+  font-size:12px;z-index:1000;
+  display:flex;align-items:center;gap:8px;
+  transform:translateY(80px);opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
 }
-.tag-pill:hover{border-color:var(--accent-border);color:var(--accent)}
-.tag-pill.selected{background:var(--accent-glow);border-color:var(--accent-border);color:var(--accent)}
-.inline-link{color:var(--accent);cursor:pointer;font-size:12px}
-.inline-link:hover{text-decoration:underline}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(0,229,160,0.4);color:var(--green);}
+.toast.error{border-color:rgba(255,95,95,0.4);color:var(--red);}
+
+/* EMPTY STATE */
 .empty-state{
-  text-align:center;padding:40px 20px;color:var(--dim);
-  display:flex;flex-direction:column;align-items:center;gap:8px;
+  text-align:center;padding:48px 24px;
+  color:var(--dim);font-size:12px;line-height:2;
 }
-.empty-icon{font-size:32px;opacity:.4}
-.divider{height:1px;background:var(--border);margin:20px 0}
+.empty-icon{font-size:36px;margin-bottom:12px;display:block;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--dim);}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .workspace{grid-template-columns:1fr;}
+  .sidebar,.preview-panel{display:none;}
+}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="app-logo">
-    <span class="logo-pill">GTM</span>
-    Workspace
+<header>
+  <div class="logo">
+    <span class="logo-mark">GTM</span>
+    Tag Automator
   </div>
-  <div class="container-breadcrumb" id="breadcrumb" style="display:none">
-    <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-container" id="breadcrumbName" onclick="goHome()">
-      <span id="breadcrumbText">Container</span>
-      <span style="font-size:10px;color:var(--dim)">↩ switch</span>
-    </span>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('builder')">Builder</button>
+    <button class="nav-tab" onclick="showPage('sites')">Sites</button>
+    <button class="nav-tab" onclick="showPage('history')">History</button>
+  </nav>
+  <div class="header-right">
+    <select class="site-selector" id="activeSite" onchange="onSiteChange()">
+      <option value="">— select site —</option>
+    </select>
+    <button class="btn btn-primary" onclick="exportJSON()">⬇ Export JSON</button>
   </div>
-  <div class="topbar-right" id="topbarRight">
-    <button class="btn btn-ghost btn-sm" onclick="showScreen('containers')">All Containers</button>
+</header>
+
+<!-- BUILDER PAGE -->
+<div id="page-builder" class="page active">
+  <div class="workspace">
+    <!-- TEMPLATE SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Tag Templates</div>
+        <div id="templateList"></div>
+      </div>
+    </div>
+
+    <!-- MAIN FORM -->
+    <div class="main-form" id="mainForm">
+      <div class="empty-state">
+        <span class="empty-icon">🏷</span>
+        Select a tag template from the left<br>to get started
+      </div>
+    </div>
+
+    <!-- PREVIEW PANEL -->
+    <div class="preview-panel">
+      <div class="preview-header">
+        <span class="preview-title">Live Preview</span>
+        <div class="preview-actions">
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="copyJSON()">Copy</button>
+        </div>
+      </div>
+      <div class="preview-body" id="previewBody">
+        <div class="empty-state" style="padding:24px 12px">
+          <span class="empty-icon" style="font-size:24px">👁</span>
+          JSON preview will<br>appear here
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- APP BODY -->
-<div class="app-body">
+<!-- SITES PAGE -->
+<div id="page-sites" class="page">
+  <div class="sites-page">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div class="page-h">Client Sites</div>
+        <div class="page-sub">Manage site profiles, GTM container IDs and data layer events</div>
+      </div>
+      <button class="btn btn-primary" onclick="toggleAddSite()">+ Add Site</button>
+    </div>
 
-  <!-- SIDEBAR (hidden on home) -->
-  <div class="sidebar" id="sidebar" style="display:none">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Workspace</div>
-      <div class="nav-item active" id="nav-tags" onclick="showWorkspace('tags')">
-        <span class="nav-icon">🏷</span> Tags
-        <span class="nav-badge" id="badge-tags">0</span>
+    <div class="add-site-form" id="addSiteForm" style="display:none;margin-bottom:20px">
+      <div class="add-site-title">New Site Profile</div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Site Name</label><input id="newSiteName" placeholder="e.g. Acme Corp"/></div>
+        <div class="field"><label>GTM Container ID</label><input id="newSiteId" placeholder="GTM-XXXXXXX"/></div>
       </div>
-      <div class="nav-item" id="nav-triggers" onclick="showWorkspace('triggers')">
-        <span class="nav-icon">⚡</span> Triggers
-        <span class="nav-badge" id="badge-triggers">0</span>
+      <div class="field-row cols-2" style="margin-bottom:14px">
+        <div class="field">
+          <label>Site Type</label>
+          <select id="newSiteType">
+            <option value="simple">Simple (DOM-based)</option>
+            <option value="datalayer">Data Layer</option>
+            <option value="spa">SPA (React/Angular/Next)</option>
+          </select>
+        </div>
+        <div class="field"><label>Known DL Events (comma-separated)</label><input id="newSiteEvents" placeholder="purchase, add_to_cart, view_item"/></div>
       </div>
-      <div class="nav-item" id="nav-variables" onclick="showWorkspace('variables')">
-        <span class="nav-icon">𝑥</span> Variables
-        <span class="nav-badge" id="badge-variables">0</span>
-      </div>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">Library</div>
-      <div class="nav-item" id="nav-templates" onclick="showScreen('templates')">
-        <span class="nav-icon">📐</span> Templates
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="addSite()">Save Site</button>
+        <button class="btn btn-ghost" onclick="toggleAddSite()">Cancel</button>
       </div>
     </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">Integration</div>
-      <div class="nav-item" id="nav-api" onclick="showScreen('api')">
-        <span class="nav-icon">🔌</span> GTM API
-      </div>
-    </div>
+
+    <div class="sites-grid" id="sitesGrid"></div>
   </div>
+</div>
 
-  <!-- CONTENT -->
-  <div class="content">
-
-    <!-- ── CONTAINERS SCREEN ── -->
-    <div class="screen active" id="screen-containers" style="overflow-y:auto">
-      <div class="containers-screen">
-        <div class="screen-header">
-          <div class="screen-title">Containers</div>
-          <div class="screen-sub">Each container maps to a GTM workspace. Create one per client or project.</div>
-        </div>
-        <div class="containers-grid" id="containersGrid">
-          <div class="container-card add-new" onclick="openNewContainerModal()">
-            <div style="font-size:28px">＋</div>
-            <div style="font-size:13px;font-weight:500">New Container</div>
-          </div>
-        </div>
-      </div>
+<!-- HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div class="history-page">
+    <div class="page-header">
+      <div class="page-h">Export History</div>
+      <div class="page-sub">Previously generated tag configs</div>
     </div>
+    <div id="historyList"></div>
+  </div>
+</div>
 
-    <!-- ── WORKSPACE SCREEN ── -->
-    <div class="screen" id="screen-workspace">
-      <div class="workspace-layout">
-        <!-- Item list -->
-        <div class="item-list-panel">
-          <div class="panel-header">
-            <div class="panel-title" id="panelTitle">Tags</div>
-            <button class="btn btn-accent btn-sm" onclick="newItem()">+ New</button>
-          </div>
-          <div class="item-search">
-            <input class="search-input" placeholder="Search..." oninput="filterItems(this.value)" id="searchInput"/>
-          </div>
-          <div class="items-list" id="itemsList"></div>
-        </div>
-        <!-- Editor -->
-        <div class="editor-panel">
-          <div class="editor-empty" id="editorEmpty">
-            <div class="editor-empty-icon">✏️</div>
-            <div style="font-size:14px;font-weight:500;color:var(--muted)">Select an item to edit</div>
-            <div style="font-size:12px;color:var(--dim)">or create a new one</div>
-          </div>
-          <div style="display:none;flex:1;flex-direction:column;overflow:hidden" id="editorWrap">
-            <div class="editor-topbar">
-              <input class="editor-name-input" id="editorName" placeholder="Name this item..." oninput="onNameChange()"/>
-              <div id="editorTypeBadge"></div>
-              <div style="margin-left:auto;display:flex;gap:6px">
-                <button class="btn btn-ghost btn-sm" onclick="duplicateItem()">Duplicate</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteItem()">Delete</button>
-                <button class="btn btn-accent btn-sm" onclick="saveItem()">Save</button>
-              </div>
-            </div>
-            <div class="editor-form" id="editorForm"></div>
-          </div>
-        </div>
-      </div>
-      <!-- Export bar -->
-      <div class="export-bar">
-        <span style="font-size:12px;color:var(--muted);font-weight:600">Export Container:</span>
-        <input class="export-name-input" id="exportName" placeholder="e.g. client-website-v1"/>
-        <div class="export-stats" id="exportStats"></div>
-        <div style="margin-left:auto;display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick="importJSON()">⬆ Import JSON</button>
-          <button class="btn btn-green btn-sm" onclick="exportAll()">⬇ Export All</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── TEMPLATES SCREEN ── -->
-    <div class="screen" id="screen-templates">
-      <div class="templates-screen">
-        <div class="template-categories" id="templateCategories"></div>
-        <div class="templates-list-panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div>
-            <div style="font-size:16px;font-weight:700" id="templateCatTitle">All Templates</div>
-            <div style="font-size:12px;color:var(--muted)" id="templateCatSub">Reusable tag/trigger/variable templates</div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="openAddCategoryModal()">+ Category</button>
-            <button class="btn btn-accent btn-sm" onclick="openAddTemplateModal()">+ Add Template</button>
-          </div>
-        </div>
-        <div class="templates-grid" id="templatesGrid"></div>
-      </div>
-    </div>
-    </div>
-
-    <!-- ── API SCREEN ── -->
-    <div class="screen" id="screen-api">
-      <div class="api-screen">
-        <div style="max-width:700px">
-          <div class="screen-header">
-            <div class="screen-title">GTM API Integration</div>
-            <div class="screen-sub">Connect to the GTM API to push tags, triggers and variables directly to your workspace without manual import.</div>
-          </div>
-          <div class="api-note">
-            ⚠️ The GTM API requires OAuth 2.0. You'll need a Google Cloud project with the Tag Manager API enabled and OAuth credentials. This section stores your config locally — never shared externally.
-          </div>
-          <div class="api-card">
-            <div class="api-card-title">
-              🔑 OAuth Credentials
-              <span class="api-status" id="apiStatus"><span class="status-dot" style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span> Not connected</span>
-            </div>
-            <div class="form-row cols-2">
-              <div class="form-group" style="margin-bottom:0">
-                <label class="form-label">Client ID</label>
-                <input class="form-input" id="apiClientId" placeholder="xxxx.apps.googleusercontent.com" type="password"/>
-              </div>
-              <div class="form-group" style="margin-bottom:0">
-                <label class="form-label">Client Secret</label>
-                <input class="form-input" id="apiClientSecret" placeholder="Client secret" type="password"/>
-              </div>
-            </div>
-            <div class="form-group" style="margin-top:14px;margin-bottom:0">
-              <label class="form-label">Redirect URI</label>
-              <input class="form-input" id="apiRedirect" value="http://localhost" placeholder="http://localhost"/>
-            </div>
-            <div style="margin-top:14px;display:flex;gap:8px">
-              <button class="btn btn-accent btn-sm" onclick="saveApiCreds()">Save Credentials</button>
-              <button class="btn btn-ghost btn-sm" onclick="clearApiCreds()">Clear</button>
-            </div>
-          </div>
-          <div class="api-card">
-            <div class="api-card-title">📦 GTM Account Details</div>
-            <div class="form-row cols-2">
-              <div class="form-group" style="margin-bottom:0">
-                <label class="form-label">Account ID</label>
-                <input class="form-input" id="apiAccountId" placeholder="123456789"/>
-              </div>
-              <div class="form-group" style="margin-bottom:0">
-                <label class="form-label">Container ID</label>
-                <input class="form-input" id="apiContainerId" placeholder="GTM-XXXXXXX"/>
-              </div>
-            </div>
-            <div class="form-group" style="margin-top:14px;margin-bottom:0">
-              <label class="form-label">Workspace ID</label>
-              <input class="form-input" id="apiWorkspaceId" placeholder="1 (default workspace)"/>
-            </div>
-          </div>
-          <div class="api-card">
-            <div class="api-card-title">🚀 Push to GTM</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
-              Once credentials are saved, you can push the current container's tags, triggers, and variables directly to the GTM workspace. Each item is created via API — no JSON import needed.
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-green btn-sm" onclick="pushToGTM()">Push Active Container</button>
-              <button class="btn btn-ghost btn-sm" onclick="testApiConnection()">Test Connection</button>
-            </div>
-            <div id="apiLog" style="margin-top:12px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;display:none"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-</div><!-- /app-body -->
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- MODAL OVERLAY -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal" id="modalBox" onclick="event.stopPropagation()">
-    <div id="modalContent"></div>
-  </div>
-</div>
-
-<!-- HIDDEN FILE INPUT -->
-<input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleImport(event)"/>
-
 <script>
-// ══════════════════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════════════════
-let APP = {
-  containers: JSON.parse(localStorage.getItem('gtm_containers')||'[]'),
-  templates: JSON.parse(localStorage.getItem('gtm_templates')||'null') || getDefaultTemplates(),
-  templateCategories: JSON.parse(localStorage.getItem('gtm_template_categories')||'null') || getDefaultTemplateCategories(),
-  apiCreds: JSON.parse(localStorage.getItem('gtm_api')||'{}'),
-  activeContainerId: null,
-  activeWorkspace: 'tags', // tags | triggers | variables
-  activeItemId: null,
-  activeTemplateCategory: 'all',
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const TEMPLATES = [
+  {
+    id:'ga4_event',
+    name:'GA4 Event',
+    desc:'Custom event tracking',
+    type:'GA4',
+    badge:'badge-ga4',
+    icon:'📊',
+    params:[
+      {key:'measurement_id',label:'Measurement ID',value:'G-XXXXXXXXXX',type:'text',required:true},
+      {key:'event_name',label:'Event Name',value:'',type:'text',required:true},
+    ],
+    eventParams:[
+      {key:'page_location',value:'{{Page URL}}'},
+      {key:'page_title',value:'{{Page Title}}'},
+    ]
+  },
+  {
+    id:'ga4_config',
+    name:'GA4 Config',
+    desc:'Base configuration tag',
+    type:'GA4',
+    badge:'badge-ga4',
+    icon:'⚙️',
+    params:[
+      {key:'measurement_id',label:'Measurement ID',value:'G-XXXXXXXXXX',type:'text',required:true},
+      {key:'send_page_view',label:'Send Page View',value:'true',type:'select',options:['true','false'],required:false},
+    ],
+    eventParams:[]
+  },
+  {
+    id:'meta_pixel',
+    name:'Meta Pixel',
+    desc:'Facebook/Meta tracking',
+    type:'META',
+    badge:'badge-meta',
+    icon:'📘',
+    params:[
+      {key:'pixel_id',label:'Pixel ID',value:'',type:'text',required:true},
+      {key:'event_type',label:'Event Type',value:'PageView',type:'select',options:['PageView','ViewContent','AddToCart','InitiateCheckout','Purchase','Lead','CompleteRegistration','Search','CustomEvent'],required:true},
+    ],
+    eventParams:[
+      {key:'content_name',value:''},
+      {key:'content_ids',value:''},
+      {key:'value',value:''},
+      {key:'currency',value:'USD'},
+    ]
+  },
+  {
+    id:'gads_conversion',
+    name:'Google Ads Conversion',
+    desc:'Conversion tracking',
+    type:'GADS',
+    badge:'badge-gads',
+    icon:'🎯',
+    params:[
+      {key:'conversion_id',label:'Conversion ID',value:'AW-XXXXXXXXX',type:'text',required:true},
+      {key:'conversion_label',label:'Conversion Label',value:'',type:'text',required:true},
+      {key:'conversion_value',label:'Conversion Value',value:'',type:'text',required:false},
+      {key:'currency_code',label:'Currency',value:'USD',type:'text',required:false},
+    ],
+    eventParams:[]
+  },
+  {
+    id:'gads_remarketing',
+    name:'Google Ads Remarketing',
+    desc:'Audience remarketing',
+    type:'GADS',
+    badge:'badge-gads',
+    icon:'🔁',
+    params:[
+      {key:'conversion_id',label:'Conversion ID',value:'AW-XXXXXXXXX',type:'text',required:true},
+      {key:'ecomm_prodid',label:'Product ID',value:'',type:'text',required:false},
+      {key:'ecomm_pagetype',label:'Page Type',value:'',type:'select',options:['home','searchresults','category','product','cart','purchase','other'],required:false},
+    ],
+    eventParams:[]
+  },
+  {
+    id:'custom_html',
+    name:'Custom HTML',
+    desc:'Raw JS / third-party scripts',
+    type:'HTML',
+    badge:'badge-html',
+    icon:'</> ',
+    params:[],
+    eventParams:[],
+    hasHTML:true
+  },
+];
+
+const TRIGGER_TYPES = [
+  {id:'pageview',label:'Page View',icon:'📄'},
+  {id:'domready',label:'DOM Ready',icon:'🔧'},
+  {id:'windowload',label:'Window Load',icon:'🪟'},
+  {id:'click_all',label:'All Clicks',icon:'🖱'},
+  {id:'click_link',label:'Link Click',icon:'🔗'},
+  {id:'form_submit',label:'Form Submit',icon:'📝'},
+  {id:'scroll',label:'Scroll Depth',icon:'📜'},
+  {id:'custom_event',label:'Custom Event',icon:'⚡'},
+  {id:'history',label:'History Change',icon:'🔀'},
+  {id:'timer',label:'Timer',icon:'⏱'},
+];
+
+const CONDITION_VARS = ['Page URL','Page Path','Page Hostname','Page Title','Referrer','Click Text','Click ID','Click Class','Click URL','Form ID','Form Class','Event Name','Custom Variable'];
+const CONDITION_OPS = ['contains','equals','matches RegEx','starts with','ends with','does not contain','does not equal'];
+
+let state = {
+  activeTemplate: null,
+  tagName: '',
+  params: [],
+  eventParams: [],
+  htmlCode: '',
+  triggers: [],
+  sites: JSON.parse(localStorage.getItem('gtm_sites')||'[]'),
+  history: JSON.parse(localStorage.getItem('gtm_history')||'[]'),
+  activeSite: '',
 };
 
-function getContainer(){
-  return APP.containers.find(c=>c.id===APP.activeContainerId);
-}
-function saveContainers(){
-  localStorage.setItem('gtm_containers',JSON.stringify(APP.containers));
-}
-function saveTemplates(){
-  localStorage.setItem('gtm_templates',JSON.stringify(APP.templates));
-}
-function saveTemplateCategories(){
-  localStorage.setItem('gtm_template_categories',JSON.stringify(APP.templateCategories));
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init(){
+  renderTemplates();
+  renderSites();
+  renderHistory();
+  populateSiteDropdown();
 }
 
-// ══════════════════════════════════════════════════════════════
-// DEFAULT DATA
-// ══════════════════════════════════════════════════════════════
-
-function getDefaultTemplates(){
-  return [
-    // ── GA4 ──
-    {id:'t1',cat:'ga4',name:'GA4 Config',type:'tag',tagType:'googtag',desc:'Base GA4 configuration tag',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'send_page_view',v:'true',t:'boolean'}],
-     eventParams:[],icon:'📊'},
-    {id:'t2',cat:'ga4',name:'GA4 Event',type:'tag',tagType:'googtag',desc:'Custom GA4 event',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'',t:'text'}],
-     eventParams:[{k:'page_location',v:'{{Page URL}}'},{k:'page_title',v:'{{Page Title}}'}],icon:'📊'},
-    {id:'t3',cat:'ga4',name:'GA4 Purchase',type:'tag',tagType:'googtag',desc:'Ecommerce purchase event',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'purchase',t:'text'}],
-     eventParams:[{k:'transaction_id',v:'{{DL - transaction_id}}'},{k:'value',v:'{{DL - value}}'},{k:'currency',v:'{{DL - currency}}'},{k:'items',v:'{{DL - items}}'}],icon:'🛒'},
-    {id:'t4',cat:'ga4',name:'GA4 View Item',type:'tag',tagType:'googtag',desc:'Product detail view',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'view_item',t:'text'}],
-     eventParams:[{k:'items',v:'{{DL - items}}'},{k:'currency',v:'{{DL - currency}}'}],icon:'👁'},
-    // ── META ──
-    {id:'t5',cat:'meta',name:'Meta Pixel Base',type:'tag',tagType:'html',desc:'Meta/Facebook base pixel',
-     html:`<script>\n!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');\nfbq('init','{{Meta Pixel ID}}');\nfbq('track','PageView');\n<\/script>`,
-     params:[],eventParams:[],icon:'📘'},
-    {id:'t6',cat:'meta',name:'Meta Purchase',type:'tag',tagType:'html',desc:'Meta purchase conversion',
-     html:`<script>\nfbq('track','Purchase',{value: {{DL - value}}, currency: '{{DL - currency}}'});\n<\/script>`,
-     params:[],eventParams:[],icon:'📘'},
-    // ── GOOGLE ADS ──
-    {id:'t7',cat:'gads',name:'Google Ads Conversion',type:'tag',tagType:'awct',desc:'Ads conversion tracking',
-     params:[{k:'conversion_id',v:'AW-XXXXXXXXX',t:'text'},{k:'conversion_label',v:'',t:'text'},{k:'conversion_value',v:'{{DL - value}}',t:'text'},{k:'currency_code',v:'USD',t:'text'}],
-     eventParams:[],icon:'🎯'},
-    {id:'t8',cat:'gads',name:'Google Ads Remarketing',type:'tag',tagType:'sp',desc:'Audience remarketing',
-     params:[{k:'conversion_id',v:'AW-XXXXXXXXX',t:'text'},{k:'ecomm_pagetype',v:'other',t:'text'}],
-     eventParams:[],icon:'🔁'},
-    // ── TRIGGERS ──
-    {id:'t9',cat:'triggers',name:'All Pages',type:'trigger',triggerType:'PAGEVIEW',desc:'Fires on every page view',
-     conditions:[],icon:'📄'},
-    {id:'t10',cat:'triggers',name:'DOM Ready',type:'trigger',triggerType:'DOM_READY',desc:'Fires when DOM is ready',
-     conditions:[],icon:'🔧'},
-    {id:'t11',cat:'triggers',name:'Window Load',type:'trigger',triggerType:'WINDOW_LOAD',desc:'Fires after full page load',
-     conditions:[],icon:'🪟'},
-    {id:'t12',cat:'triggers',name:'All Link Clicks',type:'trigger',triggerType:'LINK_CLICK',desc:'All anchor tag clicks',
-     conditions:[],icon:'🔗'},
-    {id:'t13',cat:'triggers',name:'Purchase Custom Event',type:'trigger',triggerType:'CUSTOM_EVENT',desc:'Data layer purchase event',
-     eventName:'purchase',conditions:[],icon:'🛒'},
-    {id:'t14',cat:'triggers',name:'Form Submit',type:'trigger',triggerType:'FORM_SUBMISSION',desc:'Any form submission',
-     conditions:[],icon:'📝'},
-    {id:'t15',cat:'triggers',name:'Scroll 50%',type:'trigger',triggerType:'SCROLL_DEPTH',desc:'Vertical scroll 50%',
-     scrollPercent:'50',conditions:[],icon:'📜'},
-    // ── VARIABLES ──
-    {id:'t16',cat:'variables',name:'Page URL',type:'variable',varType:'URL',desc:'Full page URL',
-     varComponent:'URL',icon:'🌐'},
-    {id:'t17',cat:'variables',name:'Page Path',type:'variable',varType:'URL',desc:'URL path only',
-     varComponent:'PATH',icon:'🌐'},
-    {id:'t18',cat:'variables',name:'Page Title',type:'variable',varType:'JS',desc:'document.title',
-     jsVar:'document.title',icon:'📄'},
-    {id:'t19',cat:'variables',name:'Click Text',type:'variable',varType:'AUTO',desc:'Clicked element text',
-     autoVar:'CLICK_TEXT',icon:'🖱'},
-    {id:'t20',cat:'variables',name:'Click URL',type:'variable',varType:'AUTO',desc:'Clicked element URL',
-     autoVar:'CLICK_URL',icon:'🖱'},
-    {id:'t21',cat:'variables',name:'Click ID',type:'variable',varType:'AUTO',desc:'Clicked element ID',
-     autoVar:'CLICK_ID',icon:'🖱'},
-    {id:'t22',cat:'variables',name:'Click Class',type:'variable',varType:'AUTO',desc:'Clicked element CSS classes',
-     autoVar:'CLICK_CLASSES',icon:'🖱'},
-    {id:'t23',cat:'variables',name:'Form ID',type:'variable',varType:'AUTO',desc:'Submitted form ID',
-     autoVar:'FORM_ID',icon:'📝'},
-    {id:'t24',cat:'variables',name:'DL - transaction_id',type:'variable',varType:'DLV',desc:'Data layer variable',
-     dlKey:'transaction_id',icon:'💾'},
-    {id:'t25',cat:'variables',name:'DL - value',type:'variable',varType:'DLV',desc:'Data layer variable',
-     dlKey:'value',icon:'💾'},
-    {id:'t26',cat:'variables',name:'DL - currency',type:'variable',varType:'DLV',desc:'Data layer variable',
-     dlKey:'currency',icon:'💾'},
-    {id:'t27',cat:'variables',name:'DL - items',type:'variable',varType:'DLV',desc:'Data layer ecommerce items',
-     dlKey:'ecommerce.items',icon:'💾'},
-    {id:'t28',cat:'variables',name:'Meta Pixel ID',type:'variable',varType:'CONST',desc:'Constant variable',
-     constValue:'',icon:'🔑'},
-    // ── ATOMS ──
-    {id:'t29',cat:'atoms',name:'CTA Button Click',type:'tag',tagType:'googtag',desc:'Track CTA button clicks',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'cta_click',t:'text'}],
-     eventParams:[{k:'cta_text',v:'{{Click Text}}'},{k:'cta_url',v:'{{Click URL}}'},{k:'page_location',v:'{{Page URL}}'}],icon:'🔘'},
-    {id:'t30',cat:'atoms',name:'Outbound Link Click',type:'tag',tagType:'googtag',desc:'Track external link clicks',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'outbound_click',t:'text'}],
-     eventParams:[{k:'link_url',v:'{{Click URL}}'},{k:'link_text',v:'{{Click Text}}'}],icon:'🔗'},
-    // ── NAVIGATION ──
-    {id:'t31',cat:'navigation',name:'Nav Click',type:'tag',tagType:'googtag',desc:'Navigation menu click tracking',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'nav_click',t:'text'}],
-     eventParams:[{k:'nav_item',v:'{{Click Text}}'},{k:'nav_url',v:'{{Click URL}}'},{k:'page_location',v:'{{Page URL}}'}],icon:'🧭'},
-    {id:'t32',cat:'navigation',name:'Mobile Menu Open',type:'tag',tagType:'googtag',desc:'Mobile hamburger open',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'mobile_menu_open',t:'text'}],
-     eventParams:[{k:'page_location',v:'{{Page URL}}'}],icon:'☰'},
-    // ── MASTHEAD ──
-    {id:'t33',cat:'masthead',name:'Hero CTA Click',type:'tag',tagType:'googtag',desc:'Hero section CTA tracking',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'hero_cta_click',t:'text'}],
-     eventParams:[{k:'cta_text',v:'{{Click Text}}'},{k:'hero_position',v:'masthead'},{k:'page_location',v:'{{Page URL}}'}],icon:'🦸'},
-    {id:'t34',cat:'masthead',name:'Video Play',type:'tag',tagType:'googtag',desc:'Video engagement in masthead',
-     params:[{k:'measurement_id',v:'G-XXXXXXXXXX',t:'text'},{k:'event_name',v:'video_start',t:'text'}],
-     eventParams:[{k:'video_title',v:'{{DL - video_title}}'},{k:'video_percent',v:'{{DL - video_percent}}'}],icon:'▶️'},
-  ];
+// ─── PAGES ───────────────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='sites') renderSites();
+  if(id==='history') renderHistory();
 }
 
-function getDefaultTemplateCategories(){
-  return [
-  {id:'ga4',label:'GA4',icon:'📊'},
-  {id:'meta',label:'Meta Pixel',icon:'📘'},
-  {id:'gads',label:'Google Ads',icon:'🎯'},
-  {id:'triggers',label:'Triggers',icon:'⚡'},
-  {id:'variables',label:'Variables',icon:'𝑥'},
-  {id:'atoms',label:'Atoms',icon:'⚛️'},
-  {id:'navigation',label:'Navigation',icon:'🧭'},
-  {id:'masthead',label:'Masthead',icon:'🦸'},
-  ];
-}
-
-const TAG_TYPES = ['googtag','html','awct','sp','ua','floodlight','gclidw','img'];
-const TRIGGER_TYPES_LIST = [
-  'PAGEVIEW','DOM_READY','WINDOW_LOAD','CLICK','LINK_CLICK',
-  'FORM_SUBMISSION','SCROLL_DEPTH','CUSTOM_EVENT','HISTORY_CHANGE',
-  'ELEMENT_VISIBILITY','TIMER','YOUTUBE_VIDEO','JS_ERROR'
-];
-const VAR_TYPES = ['DLV','URL','AUTO','CONST','JS','SMREF','REGEXM','CTXD','AEVMD','UNDEF'];
-const CONDITION_VARS = ['Page URL','Page Path','Page Hostname','Page Title','Referrer','Click Text','Click ID','Click Class','Click URL','Click Element','Form ID','Form Element','Form Classes','Form URL','Event Name','Environment Name','Container Version','Random Number','HTML ID','Custom JS Variable'];
-const CONDITION_OPS = ['equals','contains','starts with','ends with','matches RegEx','matches CSS selector','less than','greater than','does not equal','does not contain','is undefined'];
-const AUTO_VARS = ['CLICK_TEXT','CLICK_URL','CLICK_ID','CLICK_CLASSES','CLICK_ELEMENT','CLICK_TARGET','FORM_ID','FORM_ELEMENT','FORM_CLASSES','FORM_URL','FORM_TEXT'];
-
-// ══════════════════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════════════════
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const ni = document.getElementById('nav-'+id);
-  if(ni) ni.classList.add('active');
-  if(id==='templates') renderTemplates();
-}
-
-function showWorkspace(type){
-  APP.activeWorkspace=type;
-  APP.activeItemId=null;
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('nav-'+type).classList.add('active');
-  document.getElementById('panelTitle').textContent=type.charAt(0).toUpperCase()+type.slice(1);
-  document.getElementById('searchInput').value='';
-  renderItemsList();
-  hideEditor();
-  updateExportStats();
-  showScreen('workspace');
-}
-
-function goHome(){
-  APP.activeContainerId=null;
-  document.getElementById('sidebar').style.display='none';
-  document.getElementById('breadcrumb').style.display='none';
-  showScreen('containers');
-  renderContainers();
-}
-
-// ══════════════════════════════════════════════════════════════
-// CONTAINERS
-// ══════════════════════════════════════════════════════════════
-function renderContainers(){
-  const grid=document.getElementById('containersGrid');
-  const cards=APP.containers.map(c=>{
-    const tags=(c.tags||[]).length;
-    const triggers=(c.triggers||[]).length;
-    const vars=(c.variables||[]).length;
-    return `<div class="container-card" onclick="openContainer('${c.id}')">
-      <div class="cc-icon">📦</div>
-      <div class="cc-name">${c.name}</div>
-      <div class="cc-id">${c.gtmId||'No GTM ID'}</div>
-      <div class="cc-stats">
-        <span class="cc-stat"><span class="cc-stat-dot" style="background:var(--tag-color)"></span>${tags} tags</span>
-        <span class="cc-stat"><span class="cc-stat-dot" style="background:var(--trigger-color)"></span>${triggers} triggers</span>
-        <span class="cc-stat"><span class="cc-stat-dot" style="background:var(--var-color)"></span>${vars} vars</span>
-      </div>
-      <div class="cc-actions">
-        <button class="btn btn-accent btn-xs" onclick="event.stopPropagation();openContainer('${c.id}')">Open</button>
-        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editContainer('${c.id}')">Edit</button>
-        <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteContainer('${c.id}')">Delete</button>
-      </div>
-    </div>`;
-  }).join('');
-  grid.innerHTML=cards+`<div class="container-card add-new" onclick="openNewContainerModal()"><div style="font-size:28px">＋</div><div style="font-size:13px;font-weight:500">New Container</div></div>`;
-}
-
-function openContainer(id){
-  APP.activeContainerId=id;
-  APP.activeItemId=null;
-  const c=getContainer();
-  document.getElementById('sidebar').style.display='flex';
-  document.getElementById('breadcrumb').style.display='flex';
-  document.getElementById('breadcrumbText').textContent=c.name;
-  document.getElementById('exportName').value=c.name.toLowerCase().replace(/\s+/g,'-');
-  updateBadges();
-  showWorkspace('tags');
-}
-
-function openNewContainerModal(){
-  renderModal('New Container',`
-    <div class="form-group"><label class="form-label">Container Name *</label><input class="form-input" id="mc-name" placeholder="e.g. Acme Corp Website"/></div>
-    <div class="form-row cols-2">
-      <div class="form-group" style="margin:0"><label class="form-label">GTM Container ID</label><input class="form-input" id="mc-gtmid" placeholder="GTM-XXXXXXX"/></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Site URL</label><input class="form-input" id="mc-url" placeholder="https://example.com"/></div>
+// ─── TEMPLATES ───────────────────────────────────────────────────────────────
+function renderTemplates(){
+  const list = document.getElementById('templateList');
+  list.innerHTML = TEMPLATES.map(t=>`
+    <div class="template-item ${state.activeTemplate===t.id?'active':''}" onclick="selectTemplate('${t.id}')">
+      <div class="tag-type-badge ${t.badge}">${t.type}</div>
+      <div class="t-name">${t.icon} ${t.name}</div>
+      <div class="t-desc">${t.desc}</div>
     </div>
-    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="mc-desc" placeholder="Notes about this container..."></textarea></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-accent" onclick="createContainer()">Create Container</button>
+  `).join('');
+}
+
+function selectTemplate(id){
+  const tmpl = TEMPLATES.find(t=>t.id===id);
+  state.activeTemplate = id;
+  state.params = tmpl.params.map(p=>({...p,value:p.value||''}));
+  state.eventParams = (tmpl.eventParams||[]).map(p=>({...p}));
+  state.htmlCode = '';
+  state.triggers = [];
+  state.tagName = tmpl.name + ' - ';
+  renderTemplates();
+  renderForm(tmpl);
+  updatePreview();
+}
+
+// ─── FORM ────────────────────────────────────────────────────────────────────
+function renderForm(tmpl){
+  const f = document.getElementById('mainForm');
+  f.innerHTML = `
+    <div class="form-header">
+      <div class="form-title">${tmpl.icon} ${tmpl.name}</div>
+      <div class="form-subtitle">Fill in tag configuration · all fields are customisable</div>
     </div>
-  `);
-}
 
-function createContainer(){
-  const name=document.getElementById('mc-name').value.trim();
-  if(!name){toast('Container name is required','error');return;}
-  const c={
-    id:'c'+Date.now(),name,
-    gtmId:document.getElementById('mc-gtmid').value.trim(),
-    url:document.getElementById('mc-url').value.trim(),
-    desc:document.getElementById('mc-desc').value.trim(),
-    tags:[],triggers:[],variables:[],
-    created:new Date().toISOString()
-  };
-  APP.containers.push(c);
-  saveContainers();
-  closeModal();
-  renderContainers();
-  toast('Container created','success');
-  openContainer(c.id);
-}
-
-function editContainer(id){
-  const c=APP.containers.find(x=>x.id===id);
-  renderModal('Edit Container',`
-    <div class="form-group"><label class="form-label">Container Name</label><input class="form-input" id="ec-name" value="${c.name}"/></div>
-    <div class="form-row cols-2">
-      <div class="form-group" style="margin:0"><label class="form-label">GTM Container ID</label><input class="form-input" id="ec-gtmid" value="${c.gtmId||''}"/></div>
-      <div class="form-group" style="margin:0"><label class="form-label">Site URL</label><input class="form-input" id="ec-url" value="${c.url||''}"/></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-accent" onclick="saveContainerEdit('${id}')">Save</button>
-    </div>
-  `);
-}
-
-function saveContainerEdit(id){
-  const c=APP.containers.find(x=>x.id===id);
-  c.name=document.getElementById('ec-name').value.trim()||c.name;
-  c.gtmId=document.getElementById('ec-gtmid').value.trim();
-  c.url=document.getElementById('ec-url').value.trim();
-  saveContainers();closeModal();renderContainers();
-  if(APP.activeContainerId===id) document.getElementById('breadcrumbText').textContent=c.name;
-  toast('Container updated','success');
-}
-
-function deleteContainer(id){
-  if(!confirm('Delete this container? This cannot be undone.')) return;
-  APP.containers=APP.containers.filter(c=>c.id!==id);
-  saveContainers();renderContainers();
-  if(APP.activeContainerId===id) goHome();
-  toast('Container deleted','info');
-}
-
-// ══════════════════════════════════════════════════════════════
-// ITEMS LIST
-// ══════════════════════════════════════════════════════════════
-function getItems(){
-  const c=getContainer();
-  if(!c) return [];
-  return c[APP.activeWorkspace]||[];
-}
-
-function renderItemsList(filter=''){
-  const list=document.getElementById('itemsList');
-  let items=getItems();
-  if(filter) items=items.filter(i=>i.name.toLowerCase().includes(filter.toLowerCase()));
-  if(items.length===0){
-    list.innerHTML=`<div class="empty-state"><span class="empty-icon">📭</span><span style="font-size:12px">No ${APP.activeWorkspace} yet</span><button class="btn btn-accent btn-sm" style="margin-top:8px" onclick="newItem()">Create First</button></div>`;
-    return;
-  }
-  list.innerHTML=items.map(item=>{
-    const dotCls='type-dot-'+APP.activeWorkspace.replace(/s$/,'');
-    const sub=APP.activeWorkspace==='tags'?item.tagType:APP.activeWorkspace==='triggers'?item.triggerType:item.varType;
-    return `<div class="item-row ${item.id===APP.activeItemId?'active':''}" onclick="selectItem('${item.id}')">
-      <div class="item-row-name">
-        <span class="item-type-dot ${dotCls}"></span>
-        ${item.name||'Untitled'}
-      </div>
-      <div class="item-row-meta">
-        <span>${sub||'—'}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function filterItems(val){renderItemsList(val)}
-
-function selectItem(id){
-  APP.activeItemId=id;
-  renderItemsList(document.getElementById('searchInput').value);
-  const item=getItems().find(i=>i.id===id);
-  if(item) renderEditor(item);
-}
-
-function updateBadges(){
-  const c=getContainer();
-  if(!c) return;
-  document.getElementById('badge-tags').textContent=(c.tags||[]).length;
-  document.getElementById('badge-triggers').textContent=(c.triggers||[]).length;
-  document.getElementById('badge-variables').textContent=(c.variables||[]).length;
-}
-
-function updateExportStats(){
-  const c=getContainer();
-  if(!c) return;
-  const el=document.getElementById('exportStats');
-  el.innerHTML=`
-    <span class="export-stat"><span style="width:8px;height:8px;border-radius:2px;background:var(--tag-color);display:inline-block"></span>${(c.tags||[]).length} tags</span>
-    <span class="export-stat"><span style="width:8px;height:8px;border-radius:2px;background:var(--trigger-color);display:inline-block"></span>${(c.triggers||[]).length} triggers</span>
-    <span class="export-stat"><span style="width:8px;height:8px;border-radius:2px;background:var(--var-color);display:inline-block"></span>${(c.variables||[]).length} variables</span>
-  `;
-}
-
-// ══════════════════════════════════════════════════════════════
-// NEW ITEM
-// ══════════════════════════════════════════════════════════════
-function newItem(){
-  // Show template picker
-  const relevant = APP.templates.filter(t=>t.type===(APP.activeWorkspace==='tags'?'tag':APP.activeWorkspace==='triggers'?'trigger':'variable'));
-  renderModal(`New ${APP.activeWorkspace.replace(/s$/,'')} — Pick a Template`,`
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Choose a template to start from, or create blank.</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:350px;overflow-y:auto;padding-right:4px">
-      <div class="template-card" style="padding:12px;min-height:70px" onclick="createFromTemplate(null)">
-        <div class="tc-type" style="color:var(--dim)">BLANK</div>
-        <div class="tc-name" style="font-size:13px">Start Empty</div>
-      </div>
-      ${relevant.map(t=>`
-        <div class="template-card" style="padding:12px;min-height:70px" onclick="createFromTemplate('${t.id}')">
-          <div class="tc-type ${t.type==='tag'?'badge-tag':t.type==='trigger'?'badge-trigger':'badge-var'}">${t.type}</div>
-          <div class="tc-name" style="font-size:13px">${t.icon||''} ${t.name}</div>
-          <div class="tc-desc">${t.desc||''}</div>
+    <!-- TAG NAME -->
+    <div class="form-section" id="sec-name">
+      <div class="form-section-header" onclick="toggleSection('sec-name')">
+        <div class="section-title-row">
+          <span class="section-icon">🏷</span>
+          <span class="section-name">Tag Name & Metadata</span>
         </div>
-      `).join('')}
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-    </div>
-  `);
-}
-
-function createFromTemplate(templateId){
-  closeModal();
-  const c=getContainer();
-  const type=APP.activeWorkspace;
-  let item={id:'i'+Date.now(),name:'',_dirty:true};
-  if(templateId){
-    const tmpl=APP.templates.find(t=>t.id===templateId);
-    if(tmpl){
-      item.name=tmpl.name+' (copy)';
-      item={...item,...JSON.parse(JSON.stringify(tmpl)),id:item.id,_dirty:true};
-    }
-  } else {
-    if(type==='tags') item={...item,tagType:'googtag',params:[],eventParams:[],html:''};
-    else if(type==='triggers') item={...item,triggerType:'PAGEVIEW',conditions:[],logic:'AND'};
-    else item={...item,varType:'DLV',dlKey:'',constValue:'',jsVar:'',varComponent:'URL',autoVar:'CLICK_TEXT'};
-  }
-  c[type].push(item);
-  saveContainers();updateBadges();updateExportStats();
-  renderItemsList();selectItem(item.id);
-}
-
-// ══════════════════════════════════════════════════════════════
-// EDITOR
-// ══════════════════════════════════════════════════════════════
-function hideEditor(){
-  document.getElementById('editorEmpty').style.display='flex';
-  document.getElementById('editorWrap').style.display='none';
-}
-
-function renderEditor(item){
-  document.getElementById('editorEmpty').style.display='none';
-  document.getElementById('editorWrap').style.display='flex';
-  document.getElementById('editorName').value=item.name||'';
-  const type=APP.activeWorkspace;
-  const badgeEl=document.getElementById('editorTypeBadge');
-  if(type==='tags') badgeEl.innerHTML=`<span class="type-badge badge-tag">TAG</span>`;
-  else if(type==='triggers') badgeEl.innerHTML=`<span class="type-badge badge-trigger">TRIGGER</span>`;
-  else badgeEl.innerHTML=`<span class="type-badge badge-var">VARIABLE</span>`;
-
-  if(type==='tags') renderTagEditor(item);
-  else if(type==='triggers') renderTriggerEditor(item);
-  else renderVarEditor(item);
-}
-
-// ── TAG EDITOR ──
-function renderTagEditor(item){
-  const f=document.getElementById('editorForm');
-  f.innerHTML=`
-    <div class="section-card" id="sec-tagtype">
-      <div class="section-card-header" onclick="toggleSec('sec-tagtype')">
-        <span class="section-card-title">Tag Type & Configuration</span>
-        <span class="chevron">▾</span>
+        <span class="collapse-arrow">▾</span>
       </div>
-      <div class="section-card-body">
-        <div class="form-row cols-2">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Tag Type</label>
-            <select class="form-select" id="ef-tagType" onchange="onTagTypeChange(this.value)">
-              ${TAG_TYPES.map(t=>`<option value="${t}" ${item.tagType===t?'selected':''}>${tagTypeLabel(t)}</option>`).join('')}
-            </select>
+      <div class="form-section-body">
+        <div class="field-row cols-2">
+          <div class="field">
+            <label>Tag Name *</label>
+            <input id="tagName" value="${state.tagName}" oninput="state.tagName=this.value;updatePreview()" placeholder="e.g. GA4 - Purchase Event"/>
           </div>
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Firing Order / Priority</label>
-            <input class="form-input" id="ef-priority" type="number" value="${item.priority||0}"/>
+          <div class="field">
+            <label>Firing Priority</label>
+            <input id="tagPriority" value="0" type="number" oninput="updatePreview()" placeholder="0"/>
           </div>
+        </div>
+        <div class="field">
+          <label>Notes / Description</label>
+          <textarea id="tagNotes" placeholder="Optional notes for your team..." oninput="updatePreview()"></textarea>
         </div>
       </div>
     </div>
-    <div class="section-card" id="sec-tagparams">
-      <div class="section-card-header" onclick="toggleSec('sec-tagparams')">
-        <span class="section-card-title">Parameters</span>
-        <span class="section-card-sub">Core tag config fields</span>
-        <span class="chevron">▾</span>
+
+    <!-- TAG PARAMS -->
+    <div class="form-section" id="sec-params">
+      <div class="form-section-header" onclick="toggleSection('sec-params')">
+        <div class="section-title-row">
+          <span class="section-icon">⚙️</span>
+          <span class="section-name">Tag Parameters</span>
+          <span class="section-tag">required config</span>
+        </div>
+        <span class="collapse-arrow">▾</span>
       </div>
-      <div class="section-card-body">
-        <div id="ef-params-wrap"></div>
-        <button class="add-row-btn" onclick="addTagParam()">+ Add Parameter</button>
+      <div class="form-section-body">
+        <div id="paramRows"></div>
+        <button class="add-param-btn" onclick="addParam()">+ Add Parameter</button>
       </div>
     </div>
-    ${item.tagType==='html'?`
-    <div class="section-card" id="sec-html">
-      <div class="section-card-header" onclick="toggleSec('sec-html')">
-        <span class="section-card-title">HTML / Script</span>
-        <span class="chevron">▾</span>
+
+    ${tmpl.hasHTML?`
+    <!-- HTML CODE -->
+    <div class="form-section" id="sec-html">
+      <div class="form-section-header" onclick="toggleSection('sec-html')">
+        <div class="section-title-row">
+          <span class="section-icon">&lt;/&gt;</span>
+          <span class="section-name">HTML / Script Code</span>
+        </div>
+        <span class="collapse-arrow">▾</span>
       </div>
-      <div class="section-card-body">
-        <textarea class="form-textarea" id="ef-html" style="min-height:160px;font-size:11px" placeholder="<script>&#10;// your code&#10;</script>">${item.html||''}</textarea>
+      <div class="form-section-body">
+        <div class="field">
+          <label>HTML Code</label>
+          <textarea id="htmlCode" style="min-height:140px;font-size:11px" placeholder="&lt;script&gt;&#10;  // Your custom code here&#10;&lt;/script&gt;" oninput="state.htmlCode=this.value;updatePreview()"></textarea>
+        </div>
       </div>
     </div>`:''}
-    <div class="section-card" id="sec-eparams">
-      <div class="section-card-header" onclick="toggleSec('sec-eparams')">
-        <span class="section-card-title">Event Parameters</span>
-        <span class="section-card-sub">Custom data to send with tag</span>
-        <span class="chevron">▾</span>
+
+    ${tmpl.eventParams&&tmpl.eventParams.length>0||!tmpl.hasHTML?`
+    <!-- EVENT PARAMS -->
+    <div class="form-section" id="sec-eparams">
+      <div class="form-section-header" onclick="toggleSection('sec-eparams')">
+        <div class="section-title-row">
+          <span class="section-icon">📦</span>
+          <span class="section-name">Event Parameters / Custom Data</span>
+          <span class="section-tag">optional</span>
+        </div>
+        <span class="collapse-arrow">▾</span>
       </div>
-      <div class="section-card-body">
-        <div id="ef-eparams-wrap"></div>
-        <button class="add-row-btn" onclick="addEventParam()">+ Add Event Parameter</button>
+      <div class="form-section-body">
+        <div id="eventParamRows"></div>
+        <button class="add-param-btn" onclick="addEventParam()">+ Add Event Parameter</button>
       </div>
-    </div>
-    <div class="section-card" id="sec-triggers-link">
-      <div class="section-card-header" onclick="toggleSec('sec-triggers-link')">
-        <span class="section-card-title">Linked Triggers</span>
-        <span class="section-card-sub">When should this tag fire?</span>
-        <span class="chevron">▾</span>
+    </div>`:''}
+
+    <!-- TRIGGERS -->
+    <div class="form-section" id="sec-triggers">
+      <div class="form-section-header" onclick="toggleSection('sec-triggers')">
+        <div class="section-title-row">
+          <span class="section-icon">⚡</span>
+          <span class="section-name">Firing Triggers</span>
+          <span class="section-tag">when to fire</span>
+        </div>
+        <span class="collapse-arrow">▾</span>
       </div>
-      <div class="section-card-body">
-        <div id="ef-triggers-link-wrap"></div>
-      </div>
-    </div>
-    <div class="section-card" id="sec-notes">
-      <div class="section-card-header" onclick="toggleSec('sec-notes')">
-        <span class="section-card-title">Notes</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <textarea class="form-textarea" id="ef-notes" placeholder="Notes for your team...">${item.notes||''}</textarea>
+      <div class="form-section-body">
+        <div class="sidebar-label" style="margin-bottom:8px">Quick Add Trigger Type</div>
+        <div class="trigger-types">
+          ${TRIGGER_TYPES.map(t=>`<button class="trigger-type-btn" onclick="addTrigger('${t.id}','${t.label}')">${t.icon} ${t.label}</button>`).join('')}
+        </div>
+        <div id="triggerBlocks"></div>
       </div>
     </div>
   `;
-  renderTagParams(item.params||[]);
-  renderEventParams(item.eventParams||[]);
-  renderLinkedTriggers(item.linkedTriggers||[]);
+  renderParamRows();
+  renderEventParamRows();
+  renderTriggerBlocks();
 }
 
-function tagTypeLabel(t){
-  const m={googtag:'GA4 / Google Tag',html:'Custom HTML',awct:'Google Ads Conversion',sp:'Google Ads Remarketing',ua:'Universal Analytics',floodlight:'Floodlight',gclidw:'Conversion Linker',img:'Custom Image'};
-  return m[t]||t;
-}
-
-function onTagTypeChange(v){
-  const item=getActiveItem();if(!item)return;
-  item.tagType=v;
-  renderTagEditor(item);
-}
-
-function renderTagParams(params){
-  const w=document.getElementById('ef-params-wrap');if(!w)return;
-  if(!params.length){w.innerHTML='<div style="font-size:11px;color:var(--dim)">No parameters. Add one below.</div>';return;}
-  w.innerHTML=`
-    <table class="kv-table">
-      <thead class="kv-head"><tr><th>Key / Name</th><th>Value</th><th>Type</th><th style="width:30px"></th></tr></thead>
-      <tbody>${params.map((p,i)=>`<tr class="kv-row">
-        <td><input class="kv-input" value="${p.k||''}" oninput="updateTagParam(${i},'k',this.value)" placeholder="param_key"/></td>
-        <td><input class="kv-input" value="${p.v||''}" oninput="updateTagParam(${i},'v',this.value)" placeholder="value or {{Variable}}"/></td>
-        <td><select class="kv-select" onchange="updateTagParam(${i},'t',this.value)">
-          <option ${(p.t||'text')==='text'?'selected':''} value="text">text</option>
-          <option ${p.t==='template'?'selected':''} value="template">template</option>
-          <option ${p.t==='boolean'?'selected':''} value="boolean">boolean</option>
-          <option ${p.t==='integer'?'selected':''} value="integer">integer</option>
-        </select></td>
-        <td><button class="remove-row-btn" onclick="removeTagParam(${i})">×</button></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-}
-
-function renderEventParams(params){
-  const w=document.getElementById('ef-eparams-wrap');if(!w)return;
-  if(!params.length){w.innerHTML='<div style="font-size:11px;color:var(--dim)">No event parameters yet.</div>';return;}
-  w.innerHTML=`
-    <table class="kv-table">
-      <thead class="kv-head"><tr><th>Parameter Name</th><th>Value</th><th style="width:30px"></th></tr></thead>
-      <tbody>${params.map((p,i)=>`<tr class="kv-row">
-        <td><input class="kv-input" value="${p.k||''}" oninput="updateEventParam(${i},'k',this.value)" placeholder="param_name"/></td>
-        <td><input class="kv-input" value="${p.v||''}" oninput="updateEventParam(${i},'v',this.value)" placeholder="value or {{DL Variable}}"/></td>
-        <td><button class="remove-row-btn" onclick="removeEventParam(${i})">×</button></td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-}
-
-function renderLinkedTriggers(linked){
-  const c=getContainer();
-  const triggers=c?c.triggers||[]:[];
-  const w=document.getElementById('ef-triggers-link-wrap');if(!w)return;
-  if(!triggers.length){w.innerHTML='<div style="font-size:11px;color:var(--dim)">No triggers in this container yet. <span class="inline-link" onclick="showWorkspace(\'triggers\')">Create triggers first</span></div>';return;}
-  w.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px">${triggers.map(t=>`
-    <div class="tag-pill ${(linked||[]).includes(t.id)?'selected':''}" onclick="toggleLinkedTrigger('${t.id}')">
-      ${t.name||'Unnamed trigger'}
-    </div>`).join('')}</div>
-    <div style="font-size:11px;color:var(--dim);margin-top:8px">Click to link/unlink triggers</div>`;
-}
-
-// ── TRIGGER EDITOR ──
-function renderTriggerEditor(item){
-  const f=document.getElementById('editorForm');
-  const ttype=item.triggerType||'PAGEVIEW';
-  f.innerHTML=`
-    <div class="section-card" id="sec-ttype">
-      <div class="section-card-header" onclick="toggleSec('sec-ttype')">
-        <span class="section-card-title">Trigger Type</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <div class="form-row cols-2">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Trigger Type</label>
-            <select class="form-select" id="ef-trigType" onchange="onTrigTypeChange(this.value)">
-              ${TRIGGER_TYPES_LIST.map(t=>`<option value="${t}" ${ttype===t?'selected':''}>${trigTypeLabel(t)}</option>`).join('')}
-            </select>
-          </div>
-          ${ttype==='CUSTOM_EVENT'?`<div class="form-group" style="margin:0"><label class="form-label">Event Name</label><input class="form-input" id="ef-eventName" value="${item.eventName||''}" placeholder="e.g. purchase"/></div>`:''}
-          ${ttype==='SCROLL_DEPTH'?`<div class="form-group" style="margin:0"><label class="form-label">Scroll Percentages</label><input class="form-input" id="ef-scrollPercent" value="${item.scrollPercent||'25,50,75,90'}" placeholder="25,50,75,90"/></div>`:''}
-          ${ttype==='TIMER'?`<div class="form-group" style="margin:0"><label class="form-label">Interval (ms)</label><input class="form-input" id="ef-timerInterval" value="${item.timerInterval||5000}" type="number"/></div>`:''}
-          ${ttype==='ELEMENT_VISIBILITY'?`<div class="form-group" style="margin:0"><label class="form-label">CSS Selector</label><input class="form-input" id="ef-cssSelector" value="${item.cssSelector||''}" placeholder=".hero-cta"/></div>`:''}
-        </div>
-      </div>
-    </div>
-    <div class="section-card" id="sec-tcond">
-      <div class="section-card-header" onclick="toggleSec('sec-tcond')">
-        <span class="section-card-title">Conditions / Filters</span>
-        <span class="section-card-sub">Restrict when this trigger fires</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <div class="logic-toggle">
-          <button class="logic-btn ${(item.logic||'AND')==='AND'?'active':''}" onclick="setLogic('AND')">AND</button>
-          <button class="logic-btn ${item.logic==='OR'?'active':''}" onclick="setLogic('OR')">OR</button>
-        </div>
-        <div id="ef-conditions-wrap"></div>
-        <button class="add-row-btn" onclick="addCondition()">+ Add Condition</button>
-      </div>
-    </div>
-    <div class="section-card" id="sec-tnotes">
-      <div class="section-card-header" onclick="toggleSec('sec-tnotes')">
-        <span class="section-card-title">Notes</span><span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <textarea class="form-textarea" id="ef-notes" placeholder="Notes...">${item.notes||''}</textarea>
-      </div>
-    </div>
-  `;
-  renderConditions(item.conditions||[]);
-}
-
-function trigTypeLabel(t){
-  const m={PAGEVIEW:'Page View',DOM_READY:'DOM Ready',WINDOW_LOAD:'Window Load',CLICK:'All Elements Click',LINK_CLICK:'Link Click',FORM_SUBMISSION:'Form Submission',SCROLL_DEPTH:'Scroll Depth',CUSTOM_EVENT:'Custom Event',HISTORY_CHANGE:'History Change',ELEMENT_VISIBILITY:'Element Visibility',TIMER:'Timer',YOUTUBE_VIDEO:'YouTube Video',JS_ERROR:'JavaScript Error'};
-  return m[t]||t;
-}
-
-function onTrigTypeChange(v){
-  const item=getActiveItem();if(!item)return;
-  item.triggerType=v;renderTriggerEditor(item);
-}
-
-function renderConditions(conditions){
-  const w=document.getElementById('ef-conditions-wrap');if(!w)return;
-  if(!conditions.length){w.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:6px">No conditions — fires on all instances of this trigger type.</div>';return;}
-  w.innerHTML=conditions.map((c,i)=>`
-    <div class="condition-row">
-      <select class="kv-select" onchange="updateCondition(${i},'variable',this.value)">
-        ${CONDITION_VARS.map(v=>`<option ${c.variable===v?'selected':''}>${v}</option>`).join('')}
-      </select>
-      <select class="kv-select" onchange="updateCondition(${i},'operator',this.value)">
-        ${CONDITION_OPS.map(o=>`<option ${c.operator===o?'selected':''}>${o}</option>`).join('')}
-      </select>
-      <input class="kv-input" value="${c.value||''}" placeholder="value" oninput="updateCondition(${i},'value',this.value)"/>
-      <button class="remove-row-btn" onclick="removeCondition(${i})">×</button>
-    </div>`).join('');
-}
-
-// ── VAR EDITOR ──
-function renderVarEditor(item){
-  const f=document.getElementById('editorForm');
-  const vtype=item.varType||'DLV';
-  f.innerHTML=`
-    <div class="section-card" id="sec-vtype">
-      <div class="section-card-header" onclick="toggleSec('sec-vtype')">
-        <span class="section-card-title">Variable Type</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <div class="form-row cols-2">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Variable Type</label>
-            <select class="form-select" id="ef-varType" onchange="onVarTypeChange(this.value)">
-              ${VAR_TYPES.map(t=>`<option value="${t}" ${vtype===t?'selected':''}>${varTypeLabel(t)}</option>`).join('')}
-            </select>
-          </div>
-          ${vtype==='DLV'?`<div class="form-group" style="margin:0"><label class="form-label">Data Layer Key</label><input class="form-input" id="ef-dlKey" value="${item.dlKey||''}" placeholder="ecommerce.purchase.value" oninput="getActiveItem().dlKey=this.value"/></div>`:''}
-          ${vtype==='CONST'?`<div class="form-group" style="margin:0"><label class="form-label">Constant Value</label><input class="form-input" id="ef-constVal" value="${item.constValue||''}" placeholder="constant value" oninput="getActiveItem().constValue=this.value"/></div>`:''}
-          ${vtype==='JS'?`<div class="form-group" style="margin:0"><label class="form-label">JavaScript Variable</label><input class="form-input" id="ef-jsVar" value="${item.jsVar||''}" placeholder="document.title" oninput="getActiveItem().jsVar=this.value"/></div>`:''}
-          ${vtype==='URL'?`<div class="form-group" style="margin:0"><label class="form-label">URL Component</label><select class="form-select" id="ef-urlComp" onchange="getActiveItem().varComponent=this.value"><option value="URL" ${(item.varComponent||'')==='URL'?'selected':''}>Full URL</option><option value="PATH" ${item.varComponent==='PATH'?'selected':''}>Path</option><option value="HOST" ${item.varComponent==='HOST'?'selected':''}>Hostname</option><option value="QUERY" ${item.varComponent==='QUERY'?'selected':''}>Query String</option><option value="FRAGMENT" ${item.varComponent==='FRAGMENT'?'selected':''}>Fragment</option></select></div>`:''}
-          ${vtype==='AUTO'?`<div class="form-group" style="margin:0"><label class="form-label">Auto Variable</label><select class="form-select" id="ef-autoVar" onchange="getActiveItem().autoVar=this.value">${AUTO_VARS.map(v=>`<option value="${v}" ${item.autoVar===v?'selected':''}>${v}</option>`).join('')}</select></div>`:''}
-        </div>
-        ${vtype==='REGEXM'?`<div class="form-group"><label class="form-label">Pattern</label><input class="form-input" id="ef-regexPattern" value="${item.regexPattern||''}" placeholder="regex pattern" oninput="getActiveItem().regexPattern=this.value"/></div>`:''}
-        ${vtype==='CTXD'||vtype==='AEVMD'?`<div class="form-group"><label class="form-label">Cookie Name</label><input class="form-input" id="ef-cookieName" value="${item.cookieName||''}" placeholder="cookie_name" oninput="getActiveItem().cookieName=this.value"/></div>`:''}
-        ${vtype==='SMREF'?`<div class="form-group"><label class="form-label">Lookup Table — <span style="color:var(--muted)">Input Variable → Output Value</span></label><div id="ef-lookup-wrap"></div><button class="add-row-btn" onclick="addLookupRow()">+ Add Row</button></div>`:''}
-      </div>
-    </div>
-    <div class="section-card" id="sec-vformat">
-      <div class="section-card-header" onclick="toggleSec('sec-vformat')">
-        <span class="section-card-title">Formatting / Output</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <div class="form-row cols-2">
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Default Value</label>
-            <input class="form-input" id="ef-defaultVal" value="${item.defaultValue||''}" placeholder="undefined" oninput="getActiveItem().defaultValue=this.value"/>
-          </div>
-          <div class="form-group" style="margin:0">
-            <label class="form-label">Convert Undefined to</label>
-            <select class="form-select" id="ef-convertUnd" onchange="getActiveItem().convertUndefined=this.value">
-              <option value="" ${!item.convertUndefined?'selected':''}>— none —</option>
-              <option value="true" ${item.convertUndefined==='true'?'selected':''}>true</option>
-              <option value="false" ${item.convertUndefined==='false'?'selected':''}>false</option>
-              <option value="0" ${item.convertUndefined==='0'?'selected':''}>0</option>
-              <option value="" ${item.convertUndefined===''?'selected':''}>empty string</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="section-card" id="sec-vnotes">
-      <div class="section-card-header" onclick="toggleSec('sec-vnotes')">
-        <span class="section-card-title">Notes</span><span class="chevron">▾</span>
-      </div>
-      <div class="section-card-body">
-        <textarea class="form-textarea" id="ef-notes" placeholder="Notes...">${item.notes||''}</textarea>
-      </div>
-    </div>
-  `;
-  if(vtype==='SMREF') renderLookupRows(item.lookupTable||[]);
-}
-
-function varTypeLabel(t){
-  const m={DLV:'Data Layer Variable',URL:'URL',AUTO:'Auto-Event Variable',CONST:'Constant',JS:'JavaScript Variable',SMREF:'Lookup Table',REGEXM:'RegEx Table',CTXD:'Cookie',AEVMD:'1st Party Cookie',UNDEF:'Undefined Value'};
-  return m[t]||t;
-}
-
-function onVarTypeChange(v){
-  const item=getActiveItem();if(!item)return;
-  item.varType=v;renderVarEditor(item);
-}
-
-function renderLookupRows(rows){
-  const w=document.getElementById('ef-lookup-wrap');if(!w)return;
-  w.innerHTML=`<table class="kv-table"><thead class="kv-head"><tr><th>Input Value</th><th>Output Value</th><th style="width:30px"></th></tr></thead>
-  <tbody>${rows.map((r,i)=>`<tr class="kv-row">
-    <td><input class="kv-input" value="${r.k||''}" oninput="updateLookup(${i},'k',this.value)"/></td>
-    <td><input class="kv-input" value="${r.v||''}" oninput="updateLookup(${i},'v',this.value)"/></td>
-    <td><button class="remove-row-btn" onclick="removeLookup(${i})">×</button></td>
-  </tr>`).join('')}</tbody></table>`;
-}
-
-// ══════════════════════════════════════════════════════════════
-// EDIT HELPERS
-// ══════════════════════════════════════════════════════════════
-function getActiveItem(){
-  const c=getContainer();if(!c)return null;
-  return c[APP.activeWorkspace].find(i=>i.id===APP.activeItemId);
-}
-
-function onNameChange(){
-  const item=getActiveItem();if(!item)return;
-  item.name=document.getElementById('editorName').value;
-}
-
-function toggleSec(id){document.getElementById(id).classList.toggle('collapsed')}
-
-function updateTagParam(i,k,v){const item=getActiveItem();if(item&&item.params)item.params[i][k]=v;}
-function removeTagParam(i){const item=getActiveItem();if(item){item.params.splice(i,1);renderTagParams(item.params);}}
-function addTagParam(){const item=getActiveItem();if(!item)return;item.params=item.params||[];item.params.push({k:'',v:'',t:'text'});renderTagParams(item.params);}
-
-function updateEventParam(i,k,v){const item=getActiveItem();if(item&&item.eventParams)item.eventParams[i][k]=v;}
-function removeEventParam(i){const item=getActiveItem();if(item){item.eventParams.splice(i,1);renderEventParams(item.eventParams);}}
-function addEventParam(){const item=getActiveItem();if(!item)return;item.eventParams=item.eventParams||[];item.eventParams.push({k:'',v:''});renderEventParams(item.eventParams);}
-
-function toggleLinkedTrigger(tid){
-  const item=getActiveItem();if(!item)return;
-  item.linkedTriggers=item.linkedTriggers||[];
-  const idx=item.linkedTriggers.indexOf(tid);
-  if(idx>=0)item.linkedTriggers.splice(idx,1);else item.linkedTriggers.push(tid);
-  renderLinkedTriggers(item.linkedTriggers);
-}
-
-function updateCondition(i,k,v){const item=getActiveItem();if(item&&item.conditions)item.conditions[i][k]=v;}
-function removeCondition(i){const item=getActiveItem();if(item){item.conditions.splice(i,1);renderConditions(item.conditions);}}
-function addCondition(){const item=getActiveItem();if(!item)return;item.conditions=item.conditions||[];item.conditions.push({variable:'Page URL',operator:'contains',value:''});renderConditions(item.conditions);}
-function setLogic(v){const item=getActiveItem();if(!item)return;item.logic=v;document.querySelectorAll('.logic-btn').forEach(b=>b.classList.toggle('active',b.textContent===v));}
-
-function updateLookup(i,k,v){const item=getActiveItem();if(item&&item.lookupTable)item.lookupTable[i][k]=v;}
-function removeLookup(i){const item=getActiveItem();if(item){item.lookupTable.splice(i,1);renderLookupRows(item.lookupTable);}}
-function addLookupRow(){const item=getActiveItem();if(!item)return;item.lookupTable=item.lookupTable||[];item.lookupTable.push({k:'',v:''});renderLookupRows(item.lookupTable);}
-
-function saveItem(){
-  const item=getActiveItem();if(!item)return;
-  // Sync all form fields
-  const nameEl=document.getElementById('editorName');if(nameEl)item.name=nameEl.value;
-  const notesEl=document.getElementById('ef-notes');if(notesEl)item.notes=notesEl.value;
-  const htmlEl=document.getElementById('ef-html');if(htmlEl)item.html=htmlEl.value;
-  const priorityEl=document.getElementById('ef-priority');if(priorityEl)item.priority=parseInt(priorityEl.value)||0;
-  const tagTypeEl=document.getElementById('ef-tagType');if(tagTypeEl)item.tagType=tagTypeEl.value;
-  const trigTypeEl=document.getElementById('ef-trigType');if(trigTypeEl)item.triggerType=trigTypeEl.value;
-  const varTypeEl=document.getElementById('ef-varType');if(varTypeEl)item.varType=varTypeEl.value;
-  const eventNameEl=document.getElementById('ef-eventName');if(eventNameEl)item.eventName=eventNameEl.value;
-  const scrollEl=document.getElementById('ef-scrollPercent');if(scrollEl)item.scrollPercent=scrollEl.value;
-  const timerEl=document.getElementById('ef-timerInterval');if(timerEl)item.timerInterval=parseInt(timerEl.value)||5000;
-  const cssSel=document.getElementById('ef-cssSelector');if(cssSel)item.cssSelector=cssSel.value;
-  item._dirty=false;
-  saveContainers();updateBadges();updateExportStats();
-  renderItemsList(document.getElementById('searchInput').value);
-  toast('Saved ✓','success');
-}
-
-function deleteItem(){
-  if(!confirm('Delete this item?')) return;
-  const c=getContainer();
-  c[APP.activeWorkspace]=c[APP.activeWorkspace].filter(i=>i.id!==APP.activeItemId);
-  APP.activeItemId=null;
-  saveContainers();updateBadges();updateExportStats();
-  renderItemsList();hideEditor();toast('Deleted','info');
-}
-
-function duplicateItem(){
-  const item=getActiveItem();if(!item)return;
-  const c=getContainer();
-  const copy={...JSON.parse(JSON.stringify(item)),id:'i'+Date.now(),name:(item.name||'Item')+' (copy)'};
-  c[APP.activeWorkspace].push(copy);
-  saveContainers();updateBadges();updateExportStats();
-  renderItemsList();selectItem(copy.id);toast('Duplicated','success');
-}
-
-// ══════════════════════════════════════════════════════════════
-// TEMPLATES
-// ══════════════════════════════════════════════════════════════
-function renderTemplates(){
-  const categories=[{id:'all',label:'All Templates',icon:'📋'},...APP.templateCategories];
-  // categories sidebar
-  const catEl=document.getElementById('templateCategories');
-  catEl.innerHTML=`<div class="sidebar-label" style="margin-bottom:8px">Categories</div>`+
-    categories.map(c=>`<div class="template-cat-item ${APP.activeTemplateCategory===c.id?'active':''}" onclick="setTemplateCategory('${c.id}')">${c.icon} ${c.label}</div>`).join('');
-
-  // grid
-  const grid=document.getElementById('templatesGrid');
-  const cat=APP.activeTemplateCategory;
-  const items=cat==='all'?APP.templates:APP.templates.filter(t=>t.cat===cat);
-  const catInfo=categories.find(c=>c.id===cat);
-  document.getElementById('templateCatTitle').textContent=catInfo?catInfo.label+' Templates':'Templates';
-  document.getElementById('templateCatSub').textContent=`${items.length} template${items.length!==1?'s':''}`;
-
-  const typeBadge={tag:'badge-tag',trigger:'badge-trigger',variable:'badge-var'};
-  grid.innerHTML=items.map(t=>`
-    <div class="template-card">
-      <div class="tc-type ${typeBadge[t.type]||''}">${t.type}</div>
-      <div class="tc-name">${t.icon||''} ${t.name}</div>
-      <div class="tc-desc">${t.desc||''}</div>
-      <div style="display:flex;gap:6px;margin-top:10px">
-        <button class="btn btn-accent btn-xs" onclick="useTemplate('${t.id}')">Use</button>
-        <button class="btn btn-ghost btn-xs" onclick="editTemplate('${t.id}')">Edit</button>
-        <button class="btn btn-danger btn-xs" onclick="deleteTemplate('${t.id}')">×</button>
-      </div>
-    </div>`).join('');
-}
-
-function setTemplateCategory(id){
-  APP.activeTemplateCategory=id;
-  renderTemplates();
-}
-
-function useTemplate(id){
-  if(!APP.activeContainerId){toast('Open a container first','error');return;}
-  const tmpl=APP.templates.find(t=>t.id===id);
-  if(!tmpl)return;
-  const type=tmpl.type==='tag'?'tags':tmpl.type==='trigger'?'triggers':'variables';
-  const c=getContainer();
-  const copy={...JSON.parse(JSON.stringify(tmpl)),id:'i'+Date.now(),name:tmpl.name+' (copy)'};
-  delete copy.cat;
-  c[type].push(copy);
-  saveContainers();updateBadges();updateExportStats();
-  APP.activeWorkspace=type;
-  showWorkspace(type);
-  selectItem(copy.id);
-  toast('Template added to container','success');
-}
-
-function openAddTemplateModal(){
-  const categories=APP.templateCategories;
-  renderModal('Add New Template',`
-    <div class="form-row cols-2">
-      <div class="form-group" style="margin:0"><label class="form-label">Template Name</label><input class="form-input" id="nt-name" placeholder="e.g. GA4 Add to Cart"/></div>
-      <div class="form-group" style="margin:0">
-        <label class="form-label">Category</label>
-        <select class="form-select" id="nt-cat">
-          ${categories.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}
+// ─── PARAMS ──────────────────────────────────────────────────────────────────
+function renderParamRows(){
+  const c = document.getElementById('paramRows');
+  if(!c) return;
+  if(state.params.length===0){
+    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No parameters yet. Add one below.</div>';
+    return;
+  }
+  c.innerHTML = `
+    <div class="params-head cols-4"><span>Key / Name</span><span>Value</span><span>Type</span><span></span></div>
+    ${state.params.map((p,i)=>`
+      <div class="param-row cols-4">
+        <input class="param-input" value="${p.key}" oninput="state.params[${i}].key=this.value;updatePreview()" placeholder="param_key"/>
+        <input class="param-input" value="${p.value}" oninput="state.params[${i}].value=this.value;updatePreview()" placeholder="value or {{Variable}}"/>
+        <select class="param-select" onchange="state.params[${i}].vtype=this.value;updatePreview()">
+          <option ${(p.vtype||'text')==='text'?'selected':''}>text</option>
+          <option ${p.vtype==='template'?'selected':''}>template</option>
+          <option ${p.vtype==='boolean'?'selected':''}>boolean</option>
+          <option ${p.vtype==='integer'?'selected':''}>integer</option>
         </select>
+        <button class="remove-btn" onclick="removeParam(${i})">×</button>
       </div>
-    </div>
-    <div class="form-row cols-2" style="margin-top:14px">
-      <div class="form-group" style="margin:0">
-        <label class="form-label">Type</label>
-        <select class="form-select" id="nt-type">
-          <option value="tag">Tag</option>
-          <option value="trigger">Trigger</option>
-          <option value="variable">Variable</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Icon (emoji)</label><input class="form-input" id="nt-icon" placeholder="📊" maxlength="4"/></div>
-    </div>
-    <div class="form-group" style="margin-top:14px"><label class="form-label">Description</label><textarea class="form-textarea" id="nt-desc" placeholder="What does this template do?"></textarea></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-accent" onclick="addTemplate()">Add Template</button>
-    </div>
-  `);
+    `).join('')}
+  `;
 }
 
-function addTemplate(){
-  const name=document.getElementById('nt-name').value.trim();
-  if(!name){toast('Name required','error');return;}
-  const type=document.getElementById('nt-type').value;
-  const tmpl={
-    id:'tmpl'+Date.now(),
-    name,cat:document.getElementById('nt-cat').value,
-    type,icon:document.getElementById('nt-icon').value||'🏷',
-    desc:document.getElementById('nt-desc').value,
-    params:[],eventParams:[],conditions:[],
-    tagType:'googtag',triggerType:'PAGEVIEW',varType:'DLV',
+function addParam(){
+  state.params.push({key:'',value:'',vtype:'text',required:false});
+  renderParamRows();
+  updatePreview();
+}
+function removeParam(i){
+  state.params.splice(i,1);
+  renderParamRows();
+  updatePreview();
+}
+
+// ─── EVENT PARAMS ────────────────────────────────────────────────────────────
+function renderEventParamRows(){
+  const c = document.getElementById('eventParamRows');
+  if(!c) return;
+  if(state.eventParams.length===0){
+    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-bottom:8px">No event parameters yet.</div>';
+    return;
+  }
+  c.innerHTML = `
+    <div class="params-head cols-3"><span>Parameter Name</span><span>Value</span><span></span></div>
+    ${state.eventParams.map((p,i)=>`
+      <div class="param-row cols-3">
+        <input class="param-input" value="${p.key}" oninput="state.eventParams[${i}].key=this.value;updatePreview()" placeholder="param_name"/>
+        <input class="param-input" value="${p.value}" oninput="state.eventParams[${i}].value=this.value;updatePreview()" placeholder="value or {{DL Variable}}"/>
+        <button class="remove-btn" onclick="removeEventParam(${i})">×</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+function addEventParam(){
+  state.eventParams.push({key:'',value:''});
+  renderEventParamRows();
+  updatePreview();
+}
+function removeEventParam(i){
+  state.eventParams.splice(i,1);
+  renderEventParamRows();
+  updatePreview();
+}
+
+// ─── TRIGGERS ────────────────────────────────────────────────────────────────
+function addTrigger(typeId, label){
+  state.triggers.push({
+    id: Date.now(),
+    type: typeId,
+    label: label,
+    conditions:[{variable:'Page URL',operator:'contains',value:''}]
+  });
+  renderTriggerBlocks();
+  updatePreview();
+}
+
+function removeTrigger(id){
+  state.triggers = state.triggers.filter(t=>t.id!==id);
+  renderTriggerBlocks();
+  updatePreview();
+}
+
+function addCondition(triggerId){
+  const t = state.triggers.find(t=>t.id===triggerId);
+  if(t) t.conditions.push({variable:'Page URL',operator:'contains',value:''});
+  renderTriggerBlocks();
+  updatePreview();
+}
+
+function removeCondition(triggerId, ci){
+  const t = state.triggers.find(t=>t.id===triggerId);
+  if(t) t.conditions.splice(ci,1);
+  renderTriggerBlocks();
+  updatePreview();
+}
+
+function updateCondition(triggerId, ci, field, val){
+  const t = state.triggers.find(t=>t.id===triggerId);
+  if(t) t.conditions[ci][field]=val;
+  updatePreview();
+}
+
+function renderTriggerBlocks(){
+  const c = document.getElementById('triggerBlocks');
+  if(!c) return;
+  if(state.triggers.length===0){
+    c.innerHTML='<div style="font-size:11px;color:var(--dim);margin-top:10px">No triggers added. Pick a type above.</div>';
+    return;
+  }
+  c.innerHTML = state.triggers.map(t=>`
+    <div class="trigger-block">
+      <div class="trigger-block-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="trigger-block-title">${TRIGGER_TYPES.find(x=>x.id===t.type)?.icon||'⚡'} ${t.label}</span>
+          ${t.type==='custom_event'?`<input class="param-input" style="width:160px" placeholder="event name" oninput="updateTriggerEvent(${t.id},this.value)" value="${t.eventName||''}"/>`:''}
+        </div>
+        <button class="remove-btn" onclick="removeTrigger(${t.id})">×</button>
+      </div>
+      ${['pageview','domready','windowload','click_all','click_link','form_submit','custom_event','history','timer','scroll'].includes(t.type)?`
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+          Conditions <span class="logic-badge" onclick="toggleLogic(${t.id})">${t.logic||'AND'}</span>
+        </div>
+        ${t.conditions.map((c,ci)=>`
+          <div class="condition-row">
+            <select class="param-select" onchange="updateCondition(${t.id},${ci},'variable',this.value)">
+              ${CONDITION_VARS.map(v=>`<option ${c.variable===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+            <select class="param-select" onchange="updateCondition(${t.id},${ci},'operator',this.value)">
+              ${CONDITION_OPS.map(o=>`<option ${c.operator===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+            <input class="param-input" value="${c.value}" placeholder="value" oninput="updateCondition(${t.id},${ci},'value',this.value)"/>
+            <button class="remove-btn" onclick="removeCondition(${t.id},${ci})">×</button>
+          </div>
+        `).join('')}
+        <button class="add-condition-btn" onclick="addCondition(${t.id})">+ condition</button>
+      </div>`:''}
+    </div>
+  `).join('');
+}
+
+function toggleLogic(id){
+  const t = state.triggers.find(t=>t.id===id);
+  if(t) t.logic = t.logic==='AND'?'OR':'AND';
+  renderTriggerBlocks();
+  updatePreview();
+}
+
+function updateTriggerEvent(id,val){
+  const t = state.triggers.find(t=>t.id===id);
+  if(t) t.eventName=val;
+  updatePreview();
+}
+
+// ─── SECTION TOGGLE ──────────────────────────────────────────────────────────
+function toggleSection(id){
+  const sec = document.getElementById(id);
+  if(sec) sec.classList.toggle('collapsed');
+}
+
+// ─── PREVIEW ─────────────────────────────────────────────────────────────────
+function buildGTMJson(){
+  if(!state.activeTemplate) return null;
+  const tmpl = TEMPLATES.find(t=>t.id===state.activeTemplate);
+  const tagName = (document.getElementById('tagName')?.value||state.tagName||tmpl.name).trim();
+  const priority = parseInt(document.getElementById('tagPriority')?.value||'0');
+
+  // Build tag config
+  const tagParams = {};
+  state.params.forEach(p=>{ if(p.key) tagParams[p.key] = p.value; });
+
+  const eventParamsArr = state.eventParams
+    .filter(p=>p.key)
+    .map(p=>({map:[{type:'template',key:'name',value:p.key},{type:'template',key:'value',value:p.value}]}));
+
+  // Determine GTM tag type string
+  const typeMap = {
+    ga4_event:'googtag',
+    ga4_config:'googtag',
+    meta_pixel:'html',
+    gads_conversion:'awct',
+    gads_remarketing:'sp',
+    custom_html:'html'
   };
-  APP.templates.push(tmpl);saveTemplates();closeModal();renderTemplates();
-  toast('Template added','success');
-}
 
-function editTemplate(id){
-  const t=APP.templates.find(x=>x.id===id);
-  const categories=APP.templateCategories;
-  renderModal('Edit Template',`
-    <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="et-name" value="${t.name}"/></div>
-    <div class="form-row cols-2">
-      <div class="form-group" style="margin:0"><label class="form-label">Category</label>
-        <select class="form-select" id="et-cat">${categories.map(c=>`<option value="${c.id}" ${t.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select>
-      </div>
-      <div class="form-group" style="margin:0"><label class="form-label">Icon</label><input class="form-input" id="et-icon" value="${t.icon||''}"/></div>
-    </div>
-    <div class="form-group" style="margin-top:14px"><label class="form-label">Description</label><textarea class="form-textarea" id="et-desc">${t.desc||''}</textarea></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-accent" onclick="saveTemplate('${id}')">Save</button>
-    </div>
-  `);
-}
+  let tagConfig = {
+    type: typeMap[state.activeTemplate]||'html',
+    name: tagName,
+    liveId: 'live',
+    priority: {type:'integer',value:priority.toString()},
+    firingTriggerId:[],
+    tagFiringOption:'oncePerEvent',
+    parameter: buildParameters(tmpl)
+  };
 
-function saveTemplate(id){
-  const t=APP.templates.find(x=>x.id===id);
-  t.name=document.getElementById('et-name').value||t.name;
-  t.cat=document.getElementById('et-cat').value;
-  t.icon=document.getElementById('et-icon').value;
-  t.desc=document.getElementById('et-desc').value;
-  saveTemplates();closeModal();renderTemplates();toast('Template updated','success');
-}
+  // Build triggers
+  const triggersConfig = state.triggers.map((t,i)=>({
+    type: mapTriggerType(t.type),
+    name: `${tagName} - ${t.label}`,
+    filter: t.conditions.filter(c=>c.value).map(c=>({
+      type:'contains',
+      parameter:[
+        {type:'template',key:'arg0',value:`{{${c.variable}}}`},
+        {type:'template',key:'arg1',value:c.value}
+      ]
+    })),
+    customEventFilter: t.type==='custom_event' && t.eventName ? [{
+      type:'equals',
+      parameter:[
+        {type:'template',key:'arg0',value:'{{_event}}'},
+        {type:'template',key:'arg1',value:t.eventName}
+      ]
+    }] : undefined
+  }));
 
-function deleteTemplate(id){
-  if(!confirm('Delete this template?'))return;
-  APP.templates=APP.templates.filter(t=>t.id!==id);
-  saveTemplates();renderTemplates();toast('Template deleted','info');
-}
-
-function openAddCategoryModal(){
-  renderModal('Add Template Category',`
-    <div class="form-group">
-      <label class="form-label">Category Label</label>
-      <input class="form-input" id="nc-label" placeholder="e.g. Ecommerce"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Icon (emoji)</label>
-      <input class="form-input" id="nc-icon" placeholder="🛍️" maxlength="4"/>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-accent" onclick="addTemplateCategory()">Add Category</button>
-    </div>
-  `);
-}
-
-function addTemplateCategory(){
-  const label=document.getElementById('nc-label').value.trim();
-  if(!label){toast('Category name required','error');return;}
-  const id=label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  if(!id){toast('Invalid category name','error');return;}
-  if(APP.templateCategories.some(c=>c.id===id)){toast('Category already exists','error');return;}
-  APP.templateCategories.push({id,label,icon:document.getElementById('nc-icon').value||'📁'});
-  saveTemplateCategories();
-  APP.activeTemplateCategory=id;
-  closeModal();
-  renderTemplates();
-  toast('Category added','success');
-}
-
-// ══════════════════════════════════════════════════════════════
-// EXPORT / IMPORT
-// ══════════════════════════════════════════════════════════════
-function exportAll(){
-  const c=getContainer();if(!c){toast('No container active','error');return;}
-  const fname=document.getElementById('exportName').value.trim()||c.name.replace(/\s+/g,'-').toLowerCase();
-  const tags=c.tags||[];
-  const triggers=c.triggers||[];
-  const vars=c.variables||[];
-
-  // Build GTM-compatible JSON
-  const gtmJson={
-    exportFormatVersion:2,
-    exportTime:new Date().toISOString(),
+  const container = {
+    exportFormatVersion: 2,
+    exportTime: new Date().toISOString(),
     containerVersion:{
-      path:`accounts/ACCOUNT_ID/containers/${c.gtmId||'GTM-XXXXXXX'}/versions/0`,
-      accountId:'ACCOUNT_ID',
-      containerId:c.gtmId||'GTM-XXXXXXX',
-      name:c.name,
-      description:c.desc||'',
-      tag: tags.map((t,i)=>({
-        accountId:'ACCOUNT_ID',
-        containerId:c.gtmId||'GTM-XXXXXXX',
-        tagId:(i+1).toString(),
-        name:t.name||'Untitled Tag',
-        type:t.tagType||'googtag',
-        parameter: buildTagParameters(t),
-        firingTriggerId: (t.linkedTriggers||[]).map(lid=>{
-          const tr=triggers.find(x=>x.id===lid);
-          return tr?triggers.indexOf(tr)+1+'':'';
-        }).filter(Boolean),
-        tagFiringOption:'oncePerEvent',
-        priority:{type:'integer',value:String(t.priority||0)},
-        notes:t.notes||''
-      })),
-      trigger: triggers.map((t,i)=>({
-        accountId:'ACCOUNT_ID',
-        containerId:c.gtmId||'GTM-XXXXXXX',
-        triggerId:(i+1).toString(),
-        name:t.name||'Untitled Trigger',
-        type:t.triggerType||'PAGEVIEW',
-        ...(t.triggerType==='CUSTOM_EVENT'&&t.eventName?{customEventFilter:[{type:'equals',parameter:[{type:'template',key:'arg0',value:'{{_event}}'},{type:'template',key:'arg1',value:t.eventName}]}]}:{}),
-        ...(t.triggerType==='SCROLL_DEPTH'?{verticalThresholdUnits:'PERCENT',verticalThreshold:{type:'template',value:t.scrollPercent||'50'}}:{}),
-        ...(t.triggerType==='TIMER'?{interval:{type:'integer',value:String(t.timerInterval||5000)},limit:{type:'integer',value:'0'}}:{}),
-        ...(t.triggerType==='ELEMENT_VISIBILITY'&&t.cssSelector?{selector:{type:'template',value:t.cssSelector},visiblePercentageMin:{type:'integer',value:'50'}}:{}),
-        filter:(t.conditions||[]).filter(c=>c.value).map(cond=>({
-          type:mapOperator(cond.operator),
-          parameter:[{type:'template',key:'arg0',value:`{{${cond.variable}}}`},{type:'template',key:'arg1',value:cond.value}]
-        })),
-        notes:t.notes||''
-      })),
-      variable: vars.map((v,i)=>({
-        accountId:'ACCOUNT_ID',
-        containerId:c.gtmId||'GTM-XXXXXXX',
-        variableId:(i+1).toString(),
-        name:v.name||'Untitled Variable',
-        type:v.varType||'DLV',
-        parameter:buildVarParameters(v),
-        notes:v.notes||''
-      }))
+      description: document.getElementById('tagNotes')?.value||'',
+      tag:[tagConfig],
+      trigger: triggersConfig,
+      variable:[]
     }
   };
 
-  const blob=new Blob([JSON.stringify(gtmJson,null,2)],{type:'application/json'});
+  return container;
+}
+
+function buildParameters(tmpl){
+  const params = [];
+  state.params.forEach(p=>{
+    if(!p.key) return;
+    params.push({type:p.vtype||'template',key:p.key,value:p.value});
+  });
+  if(state.eventParams.length>0){
+    params.push({
+      type:'list',key:'eventParameters',
+      list: state.eventParams.filter(p=>p.key).map(p=>({
+        type:'map',
+        map:[
+          {type:'template',key:'name',value:p.key},
+          {type:'template',key:'value',value:p.value}
+        ]
+      }))
+    });
+  }
+  if(tmpl.hasHTML && state.htmlCode){
+    params.push({type:'template',key:'html',value:state.htmlCode});
+  }
+  return params;
+}
+
+function mapTriggerType(t){
+  const m={pageview:'PAGEVIEW',domready:'DOM_READY',windowload:'WINDOW_LOAD',
+    click_all:'CLICK',click_link:'LINK_CLICK',form_submit:'FORM_SUBMISSION',
+    scroll:'SCROLL_DEPTH',custom_event:'CUSTOM_EVENT',history:'HISTORY_CHANGE',timer:'TIMER'};
+  return m[t]||'PAGEVIEW';
+}
+
+function updatePreview(){
+  const json = buildGTMJson();
+  const body = document.getElementById('previewBody');
+  if(!json){ body.innerHTML='<div class="empty-state" style="padding:24px 12px"><span class="empty-icon" style="font-size:24px">👁</span>Select a template</div>'; return; }
+
+  const tagName = json.containerVersion.tag[0]?.name||'Unnamed';
+  const triggerCount = json.containerVersion.trigger.length;
+  const paramCount = json.containerVersion.tag[0]?.parameter?.length||0;
+
+  body.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-row"><span class="summary-label">Tag Name</span><span class="summary-val">${tagName||'—'}</span></div>
+      <div class="summary-row"><span class="summary-label">Type</span><span class="summary-val">${json.containerVersion.tag[0]?.type||'—'}</span></div>
+      <div class="summary-row"><span class="summary-label">Parameters</span><span class="summary-val">${paramCount}</span></div>
+      <div class="summary-row"><span class="summary-label">Triggers</span><span class="summary-val">${triggerCount} trigger${triggerCount!==1?'s':''}</span></div>
+      <div class="summary-row">
+        <span class="summary-label">Status</span>
+        <span class="summary-val">
+          <span class="status-dot ${tagName&&triggerCount>0?'dot-green':'dot-orange'}"></span>
+          ${tagName&&triggerCount>0?'Ready to export':'Incomplete'}
+        </span>
+      </div>
+    </div>
+    <div class="sidebar-label" style="margin-bottom:8px">JSON Output</div>
+    <div class="json-output">${syntaxHighlight(JSON.stringify(json,null,2))}</div>
+  `;
+}
+
+function syntaxHighlight(json){
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
+      let cls='json-number';
+      if(/^"/.test(m)){ cls=/: $/.test(m.slice(-2))||/:$/.test(m)?'json-key':'json-string'; }
+      else if(/true|false/.test(m)) cls='json-bool';
+      return `<span class="${cls}">${m}</span>`;
+    });
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportJSON(){
+  const json = buildGTMJson();
+  if(!json){ showToast('Select a template first','error'); return; }
+  const tagName = json.containerVersion.tag[0]?.name||'gtm-tag';
+  const blob = new Blob([JSON.stringify(json,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`${tagName.replace(/\s+/g,'_')}_${Date.now()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+
+  // Save to history
+  state.history.unshift({id:Date.now(),name:tagName,type:state.activeTemplate,site:state.activeSite,time:new Date().toLocaleString(),json});
+  localStorage.setItem('gtm_history',JSON.stringify(state.history.slice(0,50)));
+  showToast('Exported! Import via GTM → Admin → Import','success');
+}
+
+function copyJSON(){
+  const json = buildGTMJson();
+  if(!json){ showToast('Nothing to copy','error'); return; }
+  navigator.clipboard.writeText(JSON.stringify(json,null,2));
+  showToast('Copied to clipboard','success');
+}
+
+// ─── SITES ───────────────────────────────────────────────────────────────────
+let addSiteOpen = false;
+function toggleAddSite(){
+  addSiteOpen=!addSiteOpen;
+  document.getElementById('addSiteForm').style.display=addSiteOpen?'block':'none';
+}
+
+function addSite(){
+  const name=document.getElementById('newSiteName').value.trim();
+  const id=document.getElementById('newSiteId').value.trim();
+  const type=document.getElementById('newSiteType').value;
+  const events=document.getElementById('newSiteEvents').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!name||!id){ showToast('Name and Container ID required','error'); return; }
+  state.sites.push({id:Date.now(),name,containerId:id,type,events,tagCount:0});
+  localStorage.setItem('gtm_sites',JSON.stringify(state.sites));
+  populateSiteDropdown();
+  renderSites();
+  toggleAddSite();
+  document.getElementById('newSiteName').value='';
+  document.getElementById('newSiteId').value='';
+  document.getElementById('newSiteEvents').value='';
+  showToast('Site added','success');
+}
+
+function renderSites(){
+  const g=document.getElementById('sitesGrid');
+  if(!g) return;
+  if(state.sites.length===0){
+    g.innerHTML='<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🌐</span>No sites yet. Add your first client site.</div>';
+    return;
+  }
+  const typeLabel={simple:'Simple',datalayer:'Data Layer',spa:'SPA'};
+  const typeCls={simple:'type-simple',datalayer:'type-datalayer',spa:'type-spa'};
+  g.innerHTML=state.sites.map(s=>`
+    <div class="site-card ${state.activeSite===s.id?'selected':''}" onclick="selectSite(${s.id})">
+      <div class="site-type-badge ${typeCls[s.type]||'type-simple'}">${typeLabel[s.type]||s.type}</div>
+      <div class="site-name">${s.name}</div>
+      <div class="site-id">${s.containerId}</div>
+      ${s.events?.length?`<div class="site-tags-count">DL Events: ${s.events.join(', ')}</div>`:''}
+      <div style="display:flex;justify-content:flex-end;margin-top:12px">
+        <button class="btn btn-danger" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();removeSite(${s.id})">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectSite(id){
+  state.activeSite=id;
+  document.getElementById('activeSite').value=id;
+  renderSites();
+  showToast('Site selected','success');
+}
+
+function removeSite(id){
+  state.sites=state.sites.filter(s=>s.id!==id);
+  localStorage.setItem('gtm_sites',JSON.stringify(state.sites));
+  if(state.activeSite===id){ state.activeSite=''; document.getElementById('activeSite').value=''; }
+  populateSiteDropdown();
+  renderSites();
+}
+
+function populateSiteDropdown(){
+  const sel=document.getElementById('activeSite');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— select site —</option>'+
+    state.sites.map(s=>`<option value="${s.id}">${s.name} (${s.containerId})</option>`).join('');
+  if(cur) sel.value=cur;
+}
+
+function onSiteChange(){
+  state.activeSite=document.getElementById('activeSite').value;
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  if(!list) return;
+  if(state.history.length===0){
+    list.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>No exports yet</div>';
+    return;
+  }
+  const icons={ga4_event:'📊',ga4_config:'⚙️',meta_pixel:'📘',gads_conversion:'🎯',gads_remarketing:'🔁',custom_html:'</>'}; 
+  list.innerHTML=state.history.map(h=>`
+    <div class="history-item">
+      <span class="history-icon">${icons[h.type]||'🏷'}</span>
+      <div class="history-info">
+        <div class="history-name">${h.name}</div>
+        <div class="history-meta">${h.type} · ${h.time}${h.site?' · Site #'+h.site:''}</div>
+      </div>
+      <div class="history-actions">
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="redownload(${h.id})">Re-export</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function redownload(id){
+  const h=state.history.find(x=>x.id===id);
+  if(!h) return;
+  const blob=new Blob([JSON.stringify(h.json,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=fname+'.json';a.click();URL.revokeObjectURL(url);
-  toast(`Exported: ${fname}.json (${tags.length} tags, ${triggers.length} triggers, ${vars.length} vars)`,'success');
+  a.href=url;a.download=`${h.name.replace(/\s+/g,'_')}_reexport.json`;
+  a.click();URL.revokeObjectURL(url);
+  showToast('Re-exported','success');
 }
 
-function buildTagParameters(t){
-  const p=[];
-  (t.params||[]).forEach(x=>{if(x.k)p.push({type:x.t||'template',key:x.k,value:x.v||''})});
-  if(t.html) p.push({type:'template',key:'html',value:t.html});
-  if((t.eventParams||[]).length){
-    p.push({type:'list',key:'eventParameters',list:(t.eventParams||[]).filter(x=>x.k).map(x=>({type:'map',map:[{type:'template',key:'name',value:x.k},{type:'template',key:'value',value:x.v}]}))});
-  }
-  return p;
-}
-
-function buildVarParameters(v){
-  const p=[];
-  if(v.varType==='DLV'){
-    p.push({type:'template',key:'name',value:v.dlKey||''});
-    p.push({type:'integer',key:'dataLayerVersion',value:'2'});
-  } else if(v.varType==='CONST'){
-    p.push({type:'template',key:'value',value:v.constValue||''});
-  } else if(v.varType==='JS'){
-    p.push({type:'template',key:'javascript',value:`function(){return ${v.jsVar||'undefined'}}`});
-  } else if(v.varType==='URL'){
-    p.push({type:'template',key:'component',value:v.varComponent||'URL'});
-  } else if(v.varType==='AUTO'){
-    p.push({type:'template',key:'varType',value:v.autoVar||'CLICK_TEXT'});
-  } else if(v.varType==='CTXD' || v.varType==='AEVMD'){
-    p.push({type:'template',key:'name',value:v.cookieName||''});
-  } else if(v.varType==='REGEXM'){
-    p.push({type:'template',key:'inputVariable',value:v.regexInput||''});
-    p.push({type:'template',key:'defaultValue',value:v.defaultValue||''});
-  }
-  if(v.defaultValue&&v.varType!=='REGEXM') p.push({type:'template',key:'defaultValue',value:v.defaultValue});
-  if(v.lookupTable&&v.varType==='SMREF'){
-    p.push({type:'list',key:'map',list:v.lookupTable.map(r=>({type:'map',map:[{type:'template',key:'key',value:r.k},{type:'template',key:'value',value:r.v}]}))});
-  }
-  return p;
-}
-
-function mapOperator(op){
-  const m={'equals':'equals','contains':'contains','starts with':'startsWith','ends with':'endsWith','matches RegEx':'matchesRegex','matches CSS selector':'cssSelector','less than':'less','greater than':'greater','does not equal':'notEquals','does not contain':'notContains','is undefined':'isUndefined'};
-  return m[op]||'contains';
-}
-
-function importJSON(){document.getElementById('fileInput').click();}
-
-function handleImport(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const json=JSON.parse(ev.target.result);
-      const cv=json.containerVersion;
-      if(!cv){toast('Invalid GTM JSON format','error');return;}
-      if(!APP.activeContainerId){
-        // Create container from import
-        const c={
-          id:'c'+Date.now(),
-          name:cv.name||file.name.replace('.json',''),
-          gtmId:cv.containerId||'',desc:cv.description||'',
-          tags:[],triggers:[],variables:[],created:new Date().toISOString()
-        };
-        importItemsInto(c,cv);
-        APP.containers.push(c);saveContainers();renderContainers();
-        openContainer(c.id);
-      } else {
-        const c=getContainer();
-        if(!confirm(`Import into "${c.name}"? This will ADD to existing items.`))return;
-        importItemsInto(c,cv);
-        saveContainers();updateBadges();updateExportStats();
-        renderItemsList();
-      }
-      toast('Import successful','success');
-    }catch(err){toast('Failed to parse JSON: '+err.message,'error');}
-  };
-  reader.readAsText(file);
-  e.target.value='';
-}
-
-function importItemsInto(container,cv){
-  (cv.tag||[]).forEach(t=>{
-    container.tags.push({id:'i'+Date.now()+Math.random(),name:t.name,tagType:t.type,params:t.parameter?.filter(p=>p.key!=='html'&&p.key!=='eventParameters').map(p=>({k:p.key,v:p.value,t:p.type}))||[],html:t.parameter?.find(p=>p.key==='html')?.value||'',eventParams:t.parameter?.find(p=>p.key==='eventParameters')?.list?.map(l=>({k:l.map?.find(x=>x.key==='name')?.value||'',v:l.map?.find(x=>x.key==='value')?.value||''}))||[],notes:t.notes||''});
-  });
-  (cv.trigger||[]).forEach(t=>{
-    container.triggers.push({id:'i'+Date.now()+Math.random(),name:t.name,triggerType:t.type,conditions:(t.filter||[]).map(f=>({variable:(f.parameter||[])[0]?.value?.replace('{{','').replace('}}','')||'',operator:f.type,value:(f.parameter||[])[1]?.value||''})),notes:t.notes||''});
-  });
-  (cv.variable||[]).forEach(v=>{
-    const dlKey=v.parameter?.find(p=>p.key==='name')?.value||'';
-    container.variables.push({id:'i'+Date.now()+Math.random(),name:v.name,varType:v.type,dlKey,notes:v.notes||''});
-  });
-}
-
-// ══════════════════════════════════════════════════════════════
-// API
-// ══════════════════════════════════════════════════════════════
-function saveApiCreds(){
-  APP.apiCreds={
-    clientId:document.getElementById('apiClientId').value,
-    clientSecret:document.getElementById('apiClientSecret').value,
-    redirect:document.getElementById('apiRedirect').value,
-    accountId:document.getElementById('apiAccountId').value,
-    containerId:document.getElementById('apiContainerId').value,
-    workspaceId:document.getElementById('apiWorkspaceId').value||'1'
-  };
-  localStorage.setItem('gtm_api',JSON.stringify(APP.apiCreds));
-  updateApiStatus(true);toast('API credentials saved','success');
-}
-
-function clearApiCreds(){
-  APP.apiCreds={};localStorage.removeItem('gtm_api');
-  updateApiStatus(false);toast('Credentials cleared','info');
-}
-
-function updateApiStatus(connected){
-  const el=document.getElementById('apiStatus');
-  if(connected) el.innerHTML=`<span class="api-status status-connected">● Connected</span>`;
-  else el.innerHTML=`<span class="api-status status-disconnected">● Not connected</span>`;
-}
-
-function testApiConnection(){
-  const log=document.getElementById('apiLog');
-  log.style.display='block';
-  log.innerHTML='Testing connection...\n';
-  setTimeout(()=>{
-    if(!APP.apiCreds.clientId){log.innerHTML+='✗ No credentials saved. Save credentials first.\n';return;}
-    log.innerHTML+=`✓ Credentials found: ${APP.apiCreds.clientId.substring(0,20)}...\n`;
-    log.innerHTML+=`ℹ Account ID: ${APP.apiCreds.accountId||'not set'}\n`;
-    log.innerHTML+=`ℹ Container: ${APP.apiCreds.containerId||'not set'}\n`;
-    log.innerHTML+=`ℹ Workspace: ${APP.apiCreds.workspaceId||'1'}\n`;
-    log.innerHTML+=`\n⚠ Full OAuth flow requires server-side implementation.\nThis tool exports GTM-compatible JSON which you can import via GTM UI or use with the GTM API in your backend.\n`;
-    log.innerHTML+=`\nAPI Endpoint: https://tagmanager.googleapis.com/tagmanager/v2/accounts/${APP.apiCreds.accountId}/containers/${APP.apiCreds.containerId}/workspaces/${APP.apiCreds.workspaceId}/tags\n`;
-  },600);
-}
-
-function pushToGTM(){
-  const c=getContainer();if(!c){toast('No active container','error');return;}
-  if(!APP.apiCreds.clientId){toast('Save API credentials first','error');return;}
-  const log=document.getElementById('apiLog');
-  log.style.display='block';
-  log.innerHTML=`Preparing to push ${c.name}...\n`;
-  setTimeout(()=>{
-    log.innerHTML+=`→ ${c.tags.length} tags\n→ ${c.triggers.length} triggers\n→ ${c.variables.length} variables\n\n`;
-    log.innerHTML+=`⚠ Direct API push requires OAuth token exchange (server-side).\nUse "Export All" to download JSON, then import via:\n  GTM → Admin → Import Container\n\nOR integrate this JSON export with your backend using:\n  POST https://tagmanager.googleapis.com/tagmanager/v2/accounts/{accountId}/containers/{containerId}/workspaces/{workspaceId}/tags\n`;
-    log.innerHTML+=`\nJSON ready for export ↓\n`;
-  },500);
-  exportAll();
-}
-
-// ══════════════════════════════════════════════════════════════
-// MODAL
-// ══════════════════════════════════════════════════════════════
-function renderModal(title,body){
-  document.getElementById('modalContent').innerHTML=`<div class="modal-title">${title}</div>${body}`;
-  document.getElementById('modalOverlay').classList.add('open');
-}
-function closeModal(e){
-  if(e&&e.target!==document.getElementById('modalOverlay'))return;
-  document.getElementById('modalOverlay').classList.remove('open');
-}
-
-// ══════════════════════════════════════════════════════════════
-// TOAST
-// ══════════════════════════════════════════════════════════════
+// ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer;
-function toast(msg,type='success'){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.className=`toast show ${type}`;
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=(type==='success'?'✓ ':'✕ ')+msg;
+  t.className='toast show '+(type==='success'?'success':'error');
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// ══════════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════════
-function init(){
-  renderContainers();
-  // Restore API creds display
-  if(APP.apiCreds.clientId){
-    document.getElementById('apiClientId').value=APP.apiCreds.clientId||'';
-    document.getElementById('apiClientSecret').value=APP.apiCreds.clientSecret||'';
-    document.getElementById('apiRedirect').value=APP.apiCreds.redirect||'http://localhost';
-    document.getElementById('apiAccountId').value=APP.apiCreds.accountId||'';
-    document.getElementById('apiContainerId').value=APP.apiCreds.containerId||'';
-    document.getElementById('apiWorkspaceId').value=APP.apiCreds.workspaceId||'';
-    updateApiStatus(true);
-  }
-}
 init();
 </script>
 </body>
