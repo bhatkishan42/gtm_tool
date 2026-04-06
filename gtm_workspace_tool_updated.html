@@ -1,0 +1,2093 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GTM Workspace Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f13;
+  --panel:#12161d;
+  --panel-2:#181d26;
+  --panel-3:#1f2632;
+  --border:#2b3444;
+  --border-2:#3a465a;
+  --text:#eef3fb;
+  --muted:#97a2b7;
+  --dim:#708099;
+  --accent:#dfff58;
+  --accent-soft:rgba(223,255,88,.12);
+  --accent-border:rgba(223,255,88,.36);
+  --blue:#74a7ff;
+  --green:#2de0a7;
+  --red:#ff7171;
+  --orange:#ffb255;
+  --purple:#b596ff;
+  --shadow:0 10px 30px rgba(0,0,0,.22);
+}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;pointer-events:none;opacity:.35;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{
+  display:grid;
+  grid-template-rows:64px 1fr;
+  min-height:100vh;
+  position:relative;
+  z-index:1;
+}
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:14px;
+  padding:0 18px;
+  background:rgba(13,15,19,.88);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(18px);
+}
+.brand{
+  display:flex;align-items:center;gap:12px;min-width:240px;
+}
+.brand-mark{
+  background:var(--accent);color:#111;
+  font-weight:700;border-radius:8px;
+  padding:6px 10px;font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.brand-title{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.brand-title strong{font-size:15px}
+.version-chip,.mini-chip{
+  border:1px solid var(--accent-border);
+  color:var(--accent);
+  background:var(--accent-soft);
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  font-family:'IBM Plex Mono',monospace;
+}
+.breadcrumb{
+  display:flex;align-items:center;gap:10px;flex:1;min-width:0;
+}
+.crumb{
+  display:flex;align-items:center;gap:8px;min-width:0;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:8px 12px;
+}
+.crumb strong,.crumb span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb span{color:var(--muted);font-size:12px}
+.top-actions{display:flex;align-items:center;gap:8px}
+.btn{
+  border:none;
+  border-radius:10px;
+  padding:10px 14px;
+  color:var(--text);
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  transition:.16s ease;
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--border-2)}
+.btn-primary{
+  background:var(--accent);border-color:transparent;color:#111;font-weight:700;
+}
+.btn-primary:hover{background:#ebff7d}
+.btn-danger{color:var(--red);background:rgba(255,113,113,.08);border-color:rgba(255,113,113,.22)}
+.btn-ghost{background:transparent}
+.btn-small{padding:8px 11px;font-size:12px;border-radius:9px}
+.layout{
+  display:grid;
+  grid-template-columns:250px 360px 1fr;
+  min-height:0;
+}
+.nav{
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  overflow:auto;
+}
+.nav-group{padding:16px}
+.nav-label{
+  font-size:11px;color:var(--dim);
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  margin-bottom:10px;
+  font-family:'IBM Plex Mono',monospace;
+}
+.nav button{
+  width:100%;
+  display:flex;align-items:center;gap:10px;
+  padding:11px 12px;margin-bottom:7px;
+  border-radius:12px;
+  border:1px solid transparent;
+  background:transparent;color:var(--muted);
+  text-align:left;
+}
+.nav button:hover{background:var(--panel-2);color:var(--text);border-color:var(--border)}
+.nav button.active{
+  background:var(--accent-soft);
+  border-color:var(--accent-border);
+  color:var(--accent);
+}
+.subtle{
+  color:var(--muted);
+  font-size:13px;
+}
+.list-panel{
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+  border-right:1px solid var(--border);
+  background:var(--panel-2);
+  min-height:0;
+}
+.panel-head{
+  padding:16px 16px 10px;
+  border-bottom:1px solid var(--border);
+}
+.panel-head h2{font-size:18px;margin-bottom:4px}
+.panel-head p{font-size:12px;color:var(--muted)}
+.search-wrap{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  display:grid;gap:10px;
+}
+.input, .select, .textarea{
+  width:100%;
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:10px;
+  padding:10px 12px;
+  outline:none;
+}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(223,255,88,.10)}
+.action-row{display:flex;gap:8px;flex-wrap:wrap}
+.item-list{
+  overflow:auto;
+  padding:12px;
+  display:grid;
+  gap:10px;
+  align-content:start;
+}
+.item-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  box-shadow:var(--shadow);
+}
+.item-card:hover{border-color:var(--border-2)}
+.item-card.active{border-color:var(--accent-border);background:rgba(223,255,88,.06)}
+.item-top{
+  display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
+}
+.item-title{
+  font-size:14px;font-weight:700;line-height:1.35;
+}
+.item-meta,.item-desc{
+  font-size:12px;color:var(--muted);margin-top:6px;line-height:1.45;
+}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.badge{
+  padding:4px 8px;border-radius:999px;font-size:11px;
+  border:1px solid var(--border);
+  background:var(--panel-3);color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+}
+.list-foot{
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.editor{
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  background:linear-gradient(180deg,rgba(23,28,36,.9),rgba(13,15,19,1));
+}
+.editor-head{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+}
+.editor-head h3{font-size:18px}
+.editor-body{
+  overflow:auto;
+  padding:18px;
+  display:grid;
+  gap:14px;
+  align-content:start;
+}
+.section{
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:14px;
+  overflow:hidden;
+}
+.section > summary{
+  list-style:none;
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;
+  padding:14px 16px;
+  cursor:pointer;
+  user-select:none;
+  border-bottom:1px solid transparent;
+}
+.section[open] > summary{border-bottom-color:var(--border)}
+.section > summary::-webkit-details-marker{display:none}
+.section-title{display:flex;align-items:center;gap:10px}
+.section-title strong{font-size:14px}
+.section-title span{font-size:12px;color:var(--muted)}
+.section-body{
+  padding:16px;
+  display:grid;
+  gap:12px;
+}
+.grid-2,.grid-3{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.field{display:grid;gap:6px}
+.field label{
+  font-size:11px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.1em;
+  font-family:'IBM Plex Mono',monospace;
+}
+.textarea{min-height:90px;resize:vertical}
+.helper{font-size:11px;color:var(--muted)}
+.table-head,.row-4,.row-3{
+  display:grid;gap:8px;align-items:center
+}
+.table-head{
+  font-size:11px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.1em;
+  font-family:'IBM Plex Mono',monospace;
+  margin-bottom:6px;
+}
+.row-4,.table-head.row-4{grid-template-columns:1.2fr 1fr 130px 36px}
+.row-3,.table-head.row-3{grid-template-columns:1fr 1fr 36px}
+.tiny-btn{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--muted);
+}
+.tiny-btn:hover{color:var(--text);border-color:var(--border-2)}
+.link-btn{
+  background:transparent;border:none;color:var(--blue);padding:0;
+  font-size:12px;
+}
+.pill-switch{
+  display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;
+}
+.pill-switch button{
+  border:none;background:transparent;color:var(--muted);
+  padding:8px 12px;
+}
+.pill-switch button.active{background:var(--accent-soft);color:var(--accent)}
+.inline-list{
+  display:flex;flex-wrap:wrap;gap:8px;
+}
+.checkbox-list{
+  display:grid;gap:8px;
+  max-height:180px;overflow:auto;
+}
+.check{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:10px;padding:10px;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.stat{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+}
+.stat strong{display:block;font-size:24px}
+.stat span{color:var(--muted);font-size:12px}
+.export-bar{
+  position:sticky;bottom:0;z-index:10;
+  padding:14px 18px;
+  border-top:1px solid var(--border);
+  background:rgba(12,15,20,.96);
+  backdrop-filter:blur(16px);
+  display:grid;gap:12px;
+}
+.export-row{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+}
+.empty{
+  min-height:100%;
+  display:grid;place-items:center;
+  padding:24px;
+}
+.empty-card{
+  max-width:540px;
+  text-align:center;
+  border:1px dashed var(--border-2);
+  border-radius:18px;
+  padding:30px;
+  background:rgba(255,255,255,.02);
+}
+.empty-card h3{margin-bottom:8px}
+.code{
+  background:#0b1018;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+  white-space:pre-wrap;
+  word-break:break-word;
+  font-size:12px;
+  line-height:1.6;
+  color:#c1d0ea;
+  font-family:'IBM Plex Mono',monospace;
+}
+.modal-backdrop{
+  position:fixed;inset:0;z-index:80;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(0,0,0,.48);
+  padding:20px;
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  width:min(920px,100%);
+  max-height:min(88vh,100%);
+  overflow:auto;
+  background:var(--panel-2);
+  border:1px solid var(--border-2);
+  border-radius:20px;
+  box-shadow:0 30px 80px rgba(0,0,0,.45);
+}
+.modal-head,.modal-foot{
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.modal-foot{border-top:1px solid var(--border);border-bottom:none}
+.modal-body{padding:18px;display:grid;gap:14px}
+.template-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;
+}
+.template-tile{
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:14px;
+  padding:14px;
+}
+.template-tile:hover{border-color:var(--border-2)}
+.template-tile h4{font-size:14px;margin-bottom:5px}
+.template-tile p{font-size:12px;color:var(--muted);line-height:1.45}
+.toast-wrap{
+  position:fixed;right:18px;bottom:18px;z-index:120;display:grid;gap:10px;
+}
+.toast{
+  min-width:240px;max-width:340px;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--panel-2);
+  box-shadow:var(--shadow);
+  animation:slideIn .18s ease;
+}
+.toast.success{border-color:rgba(45,224,167,.3)}
+.toast.error{border-color:rgba(255,113,113,.3)}
+.toast.info{border-color:rgba(116,167,255,.3)}
+.toast-title{font-size:13px;font-weight:700}
+.toast-msg{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+@keyframes slideIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media (max-width:1200px){
+  .layout{grid-template-columns:220px 320px 1fr}
+}
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr}
+  .nav,.list-panel{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">GTM</div>
+      <div class="brand-title">
+        <strong>Workspace Tool</strong>
+        <span class="version-chip" id="versionChip">v2.0.0</span>
+      </div>
+    </div>
+    <div class="breadcrumb">
+      <div class="crumb" id="activeContainerCrumb">
+        <strong>No container selected</strong>
+        <span>Create or switch a site container</span>
+      </div>
+      <button class="btn btn-small" onclick="openContainerModal()">Switch container</button>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-small" onclick="openContainerModal(true)">+ New container</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="nav">
+      <div class="nav-group">
+        <div class="nav-label">Workspaces</div>
+        <button data-nav="tags" class="nav-link active" onclick="setSection('tags')">🏷 Tags</button>
+        <button data-nav="triggers" class="nav-link" onclick="setSection('triggers')">⚡ Triggers</button>
+        <button data-nav="variables" class="nav-link" onclick="setSection('variables')">🧩 Variables</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Library</div>
+        <button data-nav="templates" class="nav-link" onclick="setSection('templates')">📚 Templates</button>
+        <button data-nav="api" class="nav-link" onclick="setSection('api')">🔌 API</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Container</div>
+        <div class="subtle" id="navContainerMeta">0 tags · 0 triggers · 0 variables</div>
+      </div>
+    </aside>
+
+    <section class="list-panel">
+      <div class="panel-head">
+        <h2 id="listTitle">Tags</h2>
+        <p id="listSubtitle">Build reusable tag configurations inside the active container.</p>
+      </div>
+      <div class="search-wrap">
+        <input id="listSearch" class="input" placeholder="Search current section..." oninput="renderList()"/>
+        <div class="action-row" id="listActions"></div>
+      </div>
+      <div class="item-list" id="itemList"></div>
+      <div class="list-foot">
+        <span class="subtle" id="itemCount">0 items</span>
+        <button class="btn btn-small btn-ghost" onclick="duplicateCurrent()">Duplicate selected</button>
+      </div>
+    </section>
+
+    <section class="editor">
+      <div class="editor-head">
+        <div>
+          <h3 id="editorTitle">No item selected</h3>
+          <div class="subtle" id="editorSubtitle">Choose an item from the list or create a new one.</div>
+        </div>
+        <div class="action-row" id="editorActions"></div>
+      </div>
+      <div class="editor-body" id="editorBody">
+        <div class="empty">
+          <div class="empty-card">
+            <h3>Container-first GTM builder</h3>
+            <p class="subtle">Create a container for each site, add multiple tags, triggers, and variables, reuse items across sites, then export everything together as one GTM-style JSON file.</p>
+          </div>
+        </div>
+      </div>
+      <div class="export-bar">
+        <div class="stats">
+          <div class="stat"><strong id="tagStat">0</strong><span>Tags</span></div>
+          <div class="stat"><strong id="triggerStat">0</strong><span>Triggers</span></div>
+          <div class="stat"><strong id="variableStat">0</strong><span>Variables</span></div>
+        </div>
+        <div class="export-row">
+          <input id="exportName" class="input" style="max-width:320px" placeholder="Export file name" />
+          <button class="btn btn-ghost" onclick="triggerImport()">Import JSON</button>
+          <button class="btn btn-ghost" onclick="saveCredentials()">Save API creds</button>
+          <button class="btn btn-primary" onclick="exportAll()">Single Export All</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<input type="file" id="importInput" accept=".json,application/json" style="display:none" />
+<div class="modal-backdrop" id="modalBackdrop"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const APP_VERSION = '2.0.0';
+const STORAGE_KEY = 'gtm_workspace_tool_state_v2';
+const DEFAULT_CATEGORY_ORDER = ['GA4','Meta Pixel','Google Ads','Triggers','Variables','Atoms','Navigation','Masthead'];
+
+const TAG_TYPES = [
+  {value:'googtag', label:'GA4 / googtag'},
+  {value:'html', label:'Custom HTML'},
+  {value:'awct', label:'Google Ads Conversion'},
+  {value:'sp', label:'Remarketing'},
+  {value:'ua', label:'Universal Analytics'},
+  {value:'flc', label:'Floodlight'},
+  {value:'gclidw', label:'Conversion Linker'},
+  {value:'img', label:'Custom Image'}
+];
+
+const TRIGGER_TYPES = [
+  'PAGEVIEW','DOM_READY','WINDOW_LOAD','CLICK','LINK_CLICK','FORM_SUBMISSION',
+  'SCROLL_DEPTH','CUSTOM_EVENT','HISTORY_CHANGE','ELEMENT_VISIBILITY','TIMER','YOUTUBE_VIDEO','JS_ERROR'
+];
+
+const VARIABLE_TYPES = [
+  'DLV','URL','AUTO','CONST','JS','SMREF','REGEXM','CTXD','AEVMD','UNDEF'
+];
+
+const CONDITION_VARIABLES = [
+  'Page URL','Page Path','Page Hostname','Page Title','Referrer','Click Text','Click ID','Click Class',
+  'Click URL','Form ID','Form Class','Event Name','Element ID','Element Classes','Debug Mode'
+];
+
+const CONDITION_OPERATORS = [
+  'equals','contains','starts with','ends with','matches RegEx','matches CSS selector',
+  'does not equal','does not contain','is undefined'
+];
+
+const URL_COMPONENTS = ['full','path','host','query','fragment'];
+const PARAM_TYPES = ['text','template','boolean','integer'];
+const AUTO_VARIABLES = ['Click Element','Click Classes','Click ID','Click Target','Click URL','Form Element','History Source','Video Provider','Video Status','Video Title'];
+
+const BUILTIN_TEMPLATES = buildBuiltInTemplates();
+
+let state = loadState();
+
+function createBlankState(){
+  return {
+    version: APP_VERSION,
+    activeContainerId: '',
+    activeSection: 'tags',
+    selected: {section:'', id:''},
+    exportName: 'gtm_workspace_export',
+    api: {
+      clientId:'', clientSecret:'', redirectUri:'',
+      accountId:'', containerId:'', workspaceId:''
+    },
+    reusables: {tags:[], triggers:[], variables:[]},
+    templates: BUILTIN_TEMPLATES,
+    containers: []
+  };
+}
+
+function loadState(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if(!parsed) return seedState(createBlankState());
+    const merged = {
+      ...createBlankState(),
+      ...parsed,
+      templates: mergeTemplates(parsed.templates || []),
+      reusables: {
+        tags: parsed?.reusables?.tags || [],
+        triggers: parsed?.reusables?.triggers || [],
+        variables: parsed?.reusables?.variables || []
+      }
+    };
+    return seedState(merged);
+  }catch(e){
+    return seedState(createBlankState());
+  }
+}
+
+function seedState(base){
+  if(!base.containers || !base.containers.length){
+    const first = newContainer({
+      name:'Demo Storefront',
+      gtmContainerId:'GTM-XXXXXXX',
+      siteUrl:'https://example.com',
+      description:'Example container to show the layout.'
+    });
+    first.triggers.push(makeTrigger({
+      name:'All Pages',
+      triggerType:'PAGEVIEW',
+      logic:'AND',
+      conditions:[]
+    }));
+    first.variables.push(makeVariable({
+      name:'Page URL',
+      variableType:'URL',
+      config:{urlComponent:'full'},
+      defaultValue:'',
+      convertUndefined:false
+    }));
+    first.tags.push(makeTag({
+      name:'GA4 Config',
+      tagType:'googtag',
+      priority:100,
+      parameters:[param('measurement_id','G-XXXXXXXXXX','text')],
+      eventParameters:[],
+      rawHtml:'',
+      linkedTriggerIds:[first.triggers[0].id],
+      notes:'Demo config tag'
+    }));
+    base.containers = [first];
+    base.activeContainerId = first.id;
+  }
+  if(!base.activeContainerId && base.containers[0]) base.activeContainerId = base.containers[0].id;
+  return base;
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function uid(prefix='id'){
+  return prefix + '_' + Math.random().toString(36).slice(2,10);
+}
+
+function deepClone(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function getActiveContainer(){
+  return state.containers.find(c => c.id === state.activeContainerId) || null;
+}
+
+function newContainer(data={}){
+  return {
+    id: uid('container'),
+    name: data.name || 'New Container',
+    gtmContainerId: data.gtmContainerId || '',
+    siteUrl: data.siteUrl || '',
+    description: data.description || '',
+    tags: data.tags || [],
+    triggers: data.triggers || [],
+    variables: data.variables || [],
+    history: data.history || []
+  };
+}
+
+function param(key='', value='', type='text'){
+  return {id:uid('param'), key, value, type};
+}
+function kvRow(key='', value=''){
+  return {id:uid('kv'), key, value};
+}
+function conditionRow(variable='Page URL', operator='contains', value=''){
+  return {id:uid('cond'), variable, operator, value};
+}
+
+function makeTag(overrides={}){
+  return {
+    id: uid('tag'),
+    name: overrides.name || 'New Tag',
+    tagType: overrides.tagType || 'googtag',
+    priority: Number(overrides.priority ?? 0),
+    parameters: overrides.parameters || [],
+    eventParameters: overrides.eventParameters || [],
+    rawHtml: overrides.rawHtml || '',
+    linkedTriggerIds: overrides.linkedTriggerIds || [],
+    notes: overrides.notes || ''
+  };
+}
+
+function makeTrigger(overrides={}){
+  return {
+    id: uid('trigger'),
+    name: overrides.name || 'New Trigger',
+    triggerType: overrides.triggerType || 'PAGEVIEW',
+    logic: overrides.logic || 'AND',
+    customEventName: overrides.customEventName || '',
+    scrollPercentages: overrides.scrollPercentages || '50',
+    timerInterval: overrides.timerInterval || '3000',
+    elementSelector: overrides.elementSelector || '',
+    conditions: overrides.conditions || [conditionRow()],
+    notes: overrides.notes || ''
+  };
+}
+
+function makeVariable(overrides={}){
+  return {
+    id: uid('variable'),
+    name: overrides.name || 'New Variable',
+    variableType: overrides.variableType || 'DLV',
+    config: overrides.config || {},
+    defaultValue: overrides.defaultValue || '',
+    convertUndefined: !!overrides.convertUndefined,
+    notes: overrides.notes || ''
+  };
+}
+
+function defaultTagByType(type){
+  return makeTag({tagType:type});
+}
+function defaultTriggerByType(type){
+  return makeTrigger({triggerType:type});
+}
+function defaultVariableByType(type){
+  return makeVariable({variableType:type});
+}
+
+function buildBuiltInTemplates(){
+  const arr = [
+    template('GA4 Config','GA4','tag','⚙️','Base configuration tag', {
+      tagType:'googtag',
+      priority:100,
+      parameters:[param('measurement_id','G-XXXXXXXXXX','text'), param('send_page_view','true','boolean')]
+    }),
+    template('GA4 Event','GA4','tag','📊','Generic GA4 event tag', {
+      tagType:'googtag',
+      parameters:[param('measurement_id','G-XXXXXXXXXX','text'), param('event_name','purchase','text')],
+      eventParameters:[param('value','{{DL - value}}','template'), param('currency','{{DL - currency}}','template')]
+    }),
+    template('GA4 Purchase','GA4','tag','💳','GA4 purchase event', {
+      tagType:'googtag',
+      parameters:[param('measurement_id','G-XXXXXXXXXX','text'), param('event_name','purchase','text')],
+      eventParameters:[param('transaction_id','{{DL - transaction_id}}','template'), param('value','{{DL - value}}','template'), param('currency','{{DL - currency}}','template'), param('items','{{DL - items}}','template')]
+    }),
+    template('GA4 View Item','GA4','tag','🛍️','GA4 view_item event', {
+      tagType:'googtag',
+      parameters:[param('measurement_id','G-XXXXXXXXXX','text'), param('event_name','view_item','text')],
+      eventParameters:[param('items','{{DL - items}}','template')]
+    }),
+    template('Meta Pixel Base','Meta Pixel','tag','📘','Meta base pixel', {
+      tagType:'html',
+      rawHtml:"<script>\nfbq('init', '{{Meta Pixel ID}}');\nfbq('track', 'PageView');\n</script>"
+    }),
+    template('Meta Purchase','Meta Pixel','tag','🧾','Meta purchase event', {
+      tagType:'html',
+      rawHtml:"<script>\nfbq('track', 'Purchase', {value: '{{DL - value}}', currency: '{{DL - currency}}'});\n</script>"
+    }),
+    template('Google Ads Conversion','Google Ads','tag','🎯','Google Ads conversion tag', {
+      tagType:'awct',
+      parameters:[param('conversion_id','AW-XXXXXXXXX','text'), param('conversion_label','abc123','text'), param('value','{{DL - value}}','template'), param('currency_code','USD','text')]
+    }),
+    template('Google Ads Remarketing','Google Ads','tag','🔁','Google Ads remarketing tag', {
+      tagType:'sp',
+      parameters:[param('conversion_id','AW-XXXXXXXXX','text')]
+    }),
+    template('All Pages trigger','Triggers','trigger','🌐','Pageview trigger for all pages', {
+      triggerType:'PAGEVIEW',
+      conditions:[]
+    }),
+    template('DOM Ready','Triggers','trigger','🧱','DOM ready trigger', {
+      triggerType:'DOM_READY',
+      conditions:[]
+    }),
+    template('Window Load','Triggers','trigger','🪟','Window load trigger', {
+      triggerType:'WINDOW_LOAD',
+      conditions:[]
+    }),
+    template('All Link Clicks','Triggers','trigger','🔗','Generic link click trigger', {
+      triggerType:'LINK_CLICK',
+      conditions:[]
+    }),
+    template('Purchase Custom Event','Triggers','trigger','🛒','Custom event trigger for purchase', {
+      triggerType:'CUSTOM_EVENT',
+      customEventName:'purchase',
+      conditions:[]
+    }),
+    template('Form Submit','Triggers','trigger','📝','Form submission trigger', {
+      triggerType:'FORM_SUBMISSION',
+      conditions:[]
+    }),
+    template('Scroll 50%','Triggers','trigger','📜','Scroll depth at 50%', {
+      triggerType:'SCROLL_DEPTH',
+      scrollPercentages:'50',
+      conditions:[]
+    }),
+    template('Page URL variable','Variables','variable','🔗','URL variable for full page URL', {
+      variableType:'URL',
+      config:{urlComponent:'full'}
+    }),
+    template('Page Path','Variables','variable','🧭','URL variable for path only', {
+      variableType:'URL',
+      config:{urlComponent:'path'}
+    }),
+    template('Page Title','Variables','variable','🪪','Built as a JS variable placeholder', {
+      variableType:'JS',
+      config:{jsPath:'document.title'}
+    }),
+    template('Click Text','Variables','variable','👆','Auto event variable for click text', {
+      variableType:'AUTO',
+      config:{autoVar:'Click Text'}
+    }),
+    template('Click URL','Variables','variable','🔗','Auto event variable for click URL', {
+      variableType:'AUTO',
+      config:{autoVar:'Click URL'}
+    }),
+    template('Click ID','Variables','variable','🆔','Auto event variable for click id', {
+      variableType:'AUTO',
+      config:{autoVar:'Click ID'}
+    }),
+    template('DL transaction_id','Variables','variable','🧾','Data layer transaction id', {
+      variableType:'DLV',
+      config:{dlKey:'transaction_id'}
+    }),
+    template('DL value','Variables','variable','💰','Data layer value', {
+      variableType:'DLV',
+      config:{dlKey:'value'}
+    }),
+    template('DL currency','Variables','variable','💱','Data layer currency', {
+      variableType:'DLV',
+      config:{dlKey:'currency'}
+    }),
+    template('DL items','Variables','variable','📦','Data layer items array', {
+      variableType:'DLV',
+      config:{dlKey:'items'}
+    }),
+    template('Meta Pixel ID constant','Atoms','variable','🧷','Reusable constant for Meta pixel ID', {
+      variableType:'CONST',
+      config:{value:'1234567890'}
+    }),
+    template('CTA Button Click','Navigation','trigger','👉','Click text contains CTA', {
+      triggerType:'CLICK',
+      conditions:[conditionRow('Click Text','contains','CTA')]
+    }),
+    template('Outbound Link Click','Navigation','trigger','↗️','Click URL does not contain current host', {
+      triggerType:'LINK_CLICK',
+      conditions:[conditionRow('Click URL','does not contain','yourdomain.com')]
+    }),
+    template('Nav Click','Navigation','trigger','🧭','Nav interaction trigger', {
+      triggerType:'CLICK',
+      conditions:[conditionRow('Click Class','contains','nav')]
+    }),
+    template('Mobile Menu Open','Masthead','trigger','📱','Mobile menu interaction', {
+      triggerType:'CLICK',
+      conditions:[conditionRow('Click ID','contains','menu')]
+    }),
+    template('Hero CTA Click','Masthead','trigger','🚀','Hero CTA click', {
+      triggerType:'CLICK',
+      conditions:[conditionRow('Click Text','contains','Get Started')]
+    }),
+    template('Video Play','Masthead','trigger','▶️','YouTube or video play trigger', {
+      triggerType:'YOUTUBE_VIDEO',
+      conditions:[]
+    })
+  ];
+  return arr;
+}
+
+function template(name, category, type, icon, description, payload){
+  return {
+    id: uid('tpl'),
+    builtIn: true,
+    name, category, type, icon, description,
+    payload: payload || {}
+  };
+}
+
+function mergeTemplates(existing){
+  const builtByName = {};
+  BUILTIN_TEMPLATES.forEach(t => builtByName[t.name + '__' + t.type] = t);
+  const custom = (existing || []).filter(t => !t.builtIn);
+  return [...Object.values(builtByName), ...custom];
+}
+
+function render(){
+  document.getElementById('versionChip').textContent = 'v' + APP_VERSION;
+  const container = getActiveContainer();
+  const crumb = document.getElementById('activeContainerCrumb');
+  if(container){
+    crumb.innerHTML = '<strong>' + escapeHtml(container.name) + '</strong><span>' + escapeHtml(container.gtmContainerId || 'No GTM ID') + ' · ' + escapeHtml(container.siteUrl || 'No URL') + '</span>';
+    document.getElementById('navContainerMeta').textContent = `${container.tags.length} tags · ${container.triggers.length} triggers · ${container.variables.length} variables`;
+    document.getElementById('tagStat').textContent = container.tags.length;
+    document.getElementById('triggerStat').textContent = container.triggers.length;
+    document.getElementById('variableStat').textContent = container.variables.length;
+  }
+  document.getElementById('exportName').value = state.exportName || 'gtm_workspace_export';
+  document.querySelectorAll('.nav-link').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === state.activeSection));
+  renderListHead();
+  renderList();
+  renderEditor();
+  saveState();
+}
+
+function setSection(section){
+  state.activeSection = section;
+  state.selected = {section:'', id:''};
+  render();
+}
+
+function renderListHead(){
+  const titleMap = {
+    tags:['Tags','Build reusable tag configurations inside the active container.'],
+    triggers:['Triggers','Create shared firing rules with AND / OR conditions.'],
+    variables:['Variables','Store data layer, URL, JS, cookie, and lookup values.'],
+    templates:['Templates','Use built-ins, add your own, and copy them into containers.'],
+    api:['API','Save OAuth-related settings and inspect push endpoints.']
+  };
+  const [title, subtitle] = titleMap[state.activeSection];
+  document.getElementById('listTitle').textContent = title;
+  document.getElementById('listSubtitle').textContent = subtitle;
+  const actions = document.getElementById('listActions');
+  if(state.activeSection === 'tags'){
+    actions.innerHTML = `
+      <button class="btn btn-small btn-primary" onclick="openTemplatePicker('tag')">+ New tag</button>
+      <button class="btn btn-small" onclick="openReusablePicker('tags')">Use reusable</button>
+    `;
+  }else if(state.activeSection === 'triggers'){
+    actions.innerHTML = `
+      <button class="btn btn-small btn-primary" onclick="openTemplatePicker('trigger')">+ New trigger</button>
+      <button class="btn btn-small" onclick="openReusablePicker('triggers')">Use reusable</button>
+    `;
+  }else if(state.activeSection === 'variables'){
+    actions.innerHTML = `
+      <button class="btn btn-small btn-primary" onclick="openTemplatePicker('variable')">+ New variable</button>
+      <button class="btn btn-small" onclick="openReusablePicker('variables')">Use reusable</button>
+    `;
+  }else if(state.activeSection === 'templates'){
+    actions.innerHTML = `
+      <button class="btn btn-small btn-primary" onclick="openTemplateEditor()">+ New template</button>
+      <button class="btn btn-small" onclick="openCategoryPrompt()">+ Category</button>
+    `;
+  }else{
+    actions.innerHTML = `
+      <button class="btn btn-small btn-primary" onclick="testConnection()">Test connection</button>
+      <button class="btn btn-small" onclick="pushToGTM()">Push to GTM</button>
+    `;
+  }
+}
+
+function getSectionItems(section){
+  const container = getActiveContainer();
+  if(!container) return [];
+  if(section === 'tags') return container.tags;
+  if(section === 'triggers') return container.triggers;
+  if(section === 'variables') return container.variables;
+  if(section === 'templates') return state.templates;
+  return [];
+}
+
+function renderList(){
+  const holder = document.getElementById('itemList');
+  const count = document.getElementById('itemCount');
+  if(state.activeSection === 'api'){
+    holder.innerHTML = '';
+    count.textContent = 'API settings';
+    return;
+  }
+  const items = getSectionItems(state.activeSection);
+  const search = (document.getElementById('listSearch').value || '').toLowerCase().trim();
+  const filtered = items.filter(item => JSON.stringify(item).toLowerCase().includes(search));
+  count.textContent = filtered.length + ' items';
+  if(!filtered.length){
+    holder.innerHTML = `<div class="empty-card"><h3>No items</h3><p class="subtle">Create a new ${state.activeSection.slice(0,-1)} or clear the search.</p></div>`;
+    return;
+  }
+  holder.innerHTML = filtered.map(item => renderItemCard(item)).join('');
+}
+
+function renderItemCard(item){
+  const active = state.selected.id === item.id && state.selected.section === state.activeSection;
+  if(state.activeSection === 'tags'){
+    return `
+      <div class="item-card ${active ? 'active' : ''}" onclick="selectItem('tags','${item.id}')">
+        <div class="item-top"><div class="item-title">${escapeHtml(item.name)}</div><span class="badge">${escapeHtml(item.tagType)}</span></div>
+        <div class="item-desc">${escapeHtml(item.notes || 'No notes')}</div>
+        <div class="badges">
+          <span class="badge">${item.parameters.length} params</span>
+          <span class="badge">${item.eventParameters.length} event params</span>
+          <span class="badge">${item.linkedTriggerIds.length} linked triggers</span>
+        </div>
+      </div>
+    `;
+  }
+  if(state.activeSection === 'triggers'){
+    return `
+      <div class="item-card ${active ? 'active' : ''}" onclick="selectItem('triggers','${item.id}')">
+        <div class="item-top"><div class="item-title">${escapeHtml(item.name)}</div><span class="badge">${escapeHtml(item.triggerType)}</span></div>
+        <div class="item-desc">${escapeHtml(item.notes || 'No notes')}</div>
+        <div class="badges">
+          <span class="badge">${item.logic} logic</span>
+          <span class="badge">${item.conditions.length} conditions</span>
+        </div>
+      </div>
+    `;
+  }
+  if(state.activeSection === 'variables'){
+    return `
+      <div class="item-card ${active ? 'active' : ''}" onclick="selectItem('variables','${item.id}')">
+        <div class="item-top"><div class="item-title">${escapeHtml(item.name)}</div><span class="badge">${escapeHtml(item.variableType)}</span></div>
+        <div class="item-desc">${escapeHtml(item.notes || 'No notes')}</div>
+        <div class="badges">
+          <span class="badge">${item.convertUndefined ? 'converts undefined' : 'keeps undefined'}</span>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="item-card ${active ? 'active' : ''}" onclick="selectItem('templates','${item.id}')">
+      <div class="item-top"><div class="item-title">${escapeHtml(item.icon || '📦')} ${escapeHtml(item.name)}</div><span class="badge">${escapeHtml(item.category)}</span></div>
+      <div class="item-meta">${escapeHtml(item.type)} template ${item.builtIn ? '· built-in' : '· custom'}</div>
+      <div class="item-desc">${escapeHtml(item.description || '')}</div>
+    </div>
+  `;
+}
+
+function selectItem(section, id){
+  state.selected = {section, id};
+  render();
+}
+
+function getSelectedItem(){
+  if(state.selected.section !== state.activeSection) return null;
+  const items = getSectionItems(state.activeSection);
+  return items.find(item => item.id === state.selected.id) || null;
+}
+
+function renderEditor(){
+  const title = document.getElementById('editorTitle');
+  const subtitle = document.getElementById('editorSubtitle');
+  const body = document.getElementById('editorBody');
+  const actions = document.getElementById('editorActions');
+
+  if(state.activeSection === 'api'){
+    title.textContent = 'GTM API section';
+    subtitle.textContent = 'Save OAuth-related values locally, test credential completeness, and inspect the endpoint paths.';
+    actions.innerHTML = `
+      <button class="btn btn-small" onclick="saveCredentials()">Save</button>
+      <button class="btn btn-small btn-danger" onclick="clearCredentials()">Clear</button>
+    `;
+    body.innerHTML = renderApiEditor();
+    return;
+  }
+
+  const item = getSelectedItem();
+  if(!item){
+    title.textContent = 'No item selected';
+    subtitle.textContent = 'Choose an item from the list or create a new one.';
+    actions.innerHTML = '';
+    body.innerHTML = `
+      <div class="empty">
+        <div class="empty-card">
+          <h3>Nothing open in the editor</h3>
+          <p class="subtle">Create a new item, import a JSON file, or use a reusable item or template to start faster.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  actions.innerHTML = `
+    <button class="btn btn-small" onclick="duplicateCurrent()">Duplicate</button>
+    <button class="btn btn-small" onclick="saveCurrent()">Save</button>
+    <button class="btn btn-small" onclick="saveReusable()">Save as reusable</button>
+    <button class="btn btn-small btn-danger" onclick="deleteCurrent()">Delete</button>
+  `;
+
+  if(state.activeSection === 'tags'){
+    title.textContent = item.name;
+    subtitle.textContent = item.tagType + ' tag';
+    body.innerHTML = renderTagEditor(item);
+  }else if(state.activeSection === 'triggers'){
+    title.textContent = item.name;
+    subtitle.textContent = item.triggerType + ' trigger';
+    body.innerHTML = renderTriggerEditor(item);
+  }else if(state.activeSection === 'variables'){
+    title.textContent = item.name;
+    subtitle.textContent = item.variableType + ' variable';
+    body.innerHTML = renderVariableEditor(item);
+  }else if(state.activeSection === 'templates'){
+    title.textContent = item.name;
+    subtitle.textContent = item.type + ' template';
+    actions.innerHTML = item.builtIn
+      ? `<button class="btn btn-small" onclick="useTemplate('${item.id}')">Use template</button>`
+      : `<button class="btn btn-small" onclick="useTemplate('${item.id}')">Use template</button><button class="btn btn-small" onclick="openTemplateEditor('${item.id}')">Edit</button><button class="btn btn-small btn-danger" onclick="deleteTemplate('${item.id}')">Delete</button>`;
+    body.innerHTML = renderTemplateViewer(item);
+  }
+}
+
+function sectionOpenAttr(){ return 'open'; }
+
+function renderTagEditor(tag){
+  const container = getActiveContainer();
+  const triggerChoices = container ? container.triggers : [];
+  return `
+    <details class="section" ${sectionOpenAttr()}>
+      <summary><div class="section-title"><strong>🏷 Tag setup</strong><span>Name, type, priority, and notes</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Name</label><input class="input" value="${escapeAttr(tag.name)}" oninput="updateSelected('name', this.value)"></div>
+          <div class="field"><label>Tag type</label>
+            <select class="select" onchange="updateSelected('tagType', this.value)">
+              ${TAG_TYPES.map(t => `<option value="${t.value}" ${t.value === tag.tagType ? 'selected':''}>${t.label}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Priority</label><input class="input" type="number" value="${Number(tag.priority || 0)}" oninput="updateSelected('priority', Number(this.value||0))"></div>
+          <div class="field"><label>Notes</label><input class="input" value="${escapeAttr(tag.notes || '')}" oninput="updateSelected('notes', this.value)"></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="section" ${sectionOpenAttr()}>
+      <summary><div class="section-title"><strong>⚙️ Parameters table</strong><span>Key, value, type rows</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="table-head row-4"><div>Key</div><div>Value</div><div>Type</div><div></div></div>
+        ${(tag.parameters || []).map((row, i) => `
+          <div class="row-4">
+            <input class="input" value="${escapeAttr(row.key)}" oninput="updateNestedRow('parameters', ${i}, 'key', this.value)">
+            <input class="input" value="${escapeAttr(row.value)}" oninput="updateNestedRow('parameters', ${i}, 'value', this.value)">
+            <select class="select" onchange="updateNestedRow('parameters', ${i}, 'type', this.value)">
+              ${PARAM_TYPES.map(type => `<option value="${type}" ${type===row.type?'selected':''}>${type}</option>`).join('')}
+            </select>
+            <button class="tiny-btn" onclick="removeRow('parameters', ${i})">×</button>
+          </div>
+        `).join('')}
+        <button class="btn btn-small" onclick="addRow('parameters')">+ Add parameter</button>
+      </div>
+    </details>
+
+    <details class="section" ${sectionOpenAttr()}>
+      <summary><div class="section-title"><strong>📦 Event parameters</strong><span>Optional event payload</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="table-head row-4"><div>Key</div><div>Value</div><div>Type</div><div></div></div>
+        ${(tag.eventParameters || []).map((row, i) => `
+          <div class="row-4">
+            <input class="input" value="${escapeAttr(row.key)}" oninput="updateNestedRow('eventParameters', ${i}, 'key', this.value)">
+            <input class="input" value="${escapeAttr(row.value)}" oninput="updateNestedRow('eventParameters', ${i}, 'value', this.value)">
+            <select class="select" onchange="updateNestedRow('eventParameters', ${i}, 'type', this.value)">
+              ${PARAM_TYPES.map(type => `<option value="${type}" ${type===row.type?'selected':''}>${type}</option>`).join('')}
+            </select>
+            <button class="tiny-btn" onclick="removeRow('eventParameters', ${i})">×</button>
+          </div>
+        `).join('')}
+        <button class="btn btn-small" onclick="addRow('eventParameters')">+ Add event parameter</button>
+      </div>
+    </details>
+
+    <details class="section" ${tag.tagType === 'html' ? 'open' : ''}>
+      <summary><div class="section-title"><strong>&lt;/&gt; Raw HTML</strong><span>Shown mainly for Custom HTML tags</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="field">
+          <label>Raw HTML / Script</label>
+          <textarea class="textarea" oninput="updateSelected('rawHtml', this.value)">${escapeHtml(tag.rawHtml || '')}</textarea>
+        </div>
+      </div>
+    </details>
+
+    <details class="section" ${sectionOpenAttr()}>
+      <summary><div class="section-title"><strong>🔗 Linked triggers</strong><span>Pick one or more triggers in this container</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="checkbox-list">
+          ${triggerChoices.length ? triggerChoices.map(tr => `
+            <label class="check">
+              <input type="checkbox" ${tag.linkedTriggerIds.includes(tr.id) ? 'checked':''} onchange="toggleLinkedTrigger('${tr.id}', this.checked)">
+              <div><strong>${escapeHtml(tr.name)}</strong><div class="helper">${escapeHtml(tr.triggerType)}</div></div>
+            </label>
+          `).join('') : '<div class="helper">No triggers in this container yet. Create one first.</div>'}
+        </div>
+      </div>
+    </details>
+
+    <details class="section" ${sectionOpenAttr()}>
+      <summary><div class="section-title"><strong>👁 Preview</strong><span>GTM-style tag object</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="code">${escapeHtml(JSON.stringify(buildExportObject().containerVersion.tag.find(t => t.name === tag.name) || exportTag(tag), null, 2))}</div>
+      </div>
+    </details>
+  `;
+}
+
+function renderTriggerEditor(trigger){
+  return `
+    <details class="section" open>
+      <summary><div class="section-title"><strong>⚡ Trigger setup</strong><span>Type and special fields</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Name</label><input class="input" value="${escapeAttr(trigger.name)}" oninput="updateSelected('name', this.value)"></div>
+          <div class="field"><label>Trigger type</label>
+            <select class="select" onchange="updateSelected('triggerType', this.value)">
+              ${TRIGGER_TYPES.map(t => `<option value="${t}" ${t===trigger.triggerType?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Notes</label><input class="input" value="${escapeAttr(trigger.notes || '')}" oninput="updateSelected('notes', this.value)"></div>
+        ${renderTriggerExtras(trigger)}
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary><div class="section-title"><strong>🧠 Logic</strong><span>AND / OR toggle for conditions</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="pill-switch">
+          <button class="${trigger.logic==='AND'?'active':''}" onclick="updateSelected('logic','AND')">AND</button>
+          <button class="${trigger.logic==='OR'?'active':''}" onclick="updateSelected('logic','OR')">OR</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary><div class="section-title"><strong>🧪 Conditions</strong><span>Variable / operator / value builder</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="table-head row-4"><div>Variable</div><div>Operator</div><div>Value</div><div></div></div>
+        ${(trigger.conditions || []).map((row, i) => `
+          <div class="row-4">
+            <select class="select" onchange="updateCondition(${i}, 'variable', this.value)">
+              ${[...new Set([...CONDITION_VARIABLES, ...getContainerVariableNames()])].map(v => `<option value="${escapeAttr(v)}" ${row.variable===v?'selected':''}>${escapeHtml(v)}</option>`).join('')}
+            </select>
+            <select class="select" onchange="updateCondition(${i}, 'operator', this.value)">
+              ${CONDITION_OPERATORS.map(op => `<option value="${op}" ${row.operator===op?'selected':''}>${op}</option>`).join('')}
+            </select>
+            <input class="input" value="${escapeAttr(row.value)}" oninput="updateCondition(${i}, 'value', this.value)">
+            <button class="tiny-btn" onclick="removeCondition(${i})">×</button>
+          </div>
+        `).join('')}
+        <button class="btn btn-small" onclick="addCondition()">+ Add condition</button>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary><div class="section-title"><strong>👁 Preview</strong><span>GTM-style trigger object</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="code">${escapeHtml(JSON.stringify(exportTrigger(trigger), null, 2))}</div>
+      </div>
+    </details>
+  `;
+}
+
+function renderTriggerExtras(trigger){
+  let html = '';
+  if(trigger.triggerType === 'CUSTOM_EVENT'){
+    html += `<div class="field"><label>Event name</label><input class="input" value="${escapeAttr(trigger.customEventName || '')}" oninput="updateSelected('customEventName', this.value)"></div>`;
+  }
+  if(trigger.triggerType === 'SCROLL_DEPTH'){
+    html += `<div class="field"><label>Scroll percentages</label><input class="input" value="${escapeAttr(trigger.scrollPercentages || '50')}" oninput="updateSelected('scrollPercentages', this.value)" placeholder="25,50,75,90"></div>`;
+  }
+  if(trigger.triggerType === 'TIMER'){
+    html += `<div class="field"><label>Timer interval ms</label><input class="input" value="${escapeAttr(trigger.timerInterval || '3000')}" oninput="updateSelected('timerInterval', this.value)"></div>`;
+  }
+  if(trigger.triggerType === 'ELEMENT_VISIBILITY'){
+    html += `<div class="field"><label>CSS selector</label><input class="input" value="${escapeAttr(trigger.elementSelector || '')}" oninput="updateSelected('elementSelector', this.value)" placeholder=".hero, #checkout"></div>`;
+  }
+  return html || `<div class="helper">This trigger type uses the condition builder below for its matching rules.</div>`;
+}
+
+function renderVariableEditor(variable){
+  return `
+    <details class="section" open>
+      <summary><div class="section-title"><strong>🧩 Variable setup</strong><span>Type-specific configuration</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Name</label><input class="input" value="${escapeAttr(variable.name)}" oninput="updateSelected('name', this.value)"></div>
+          <div class="field"><label>Variable type</label>
+            <select class="select" onchange="updateSelected('variableType', this.value)">
+              ${VARIABLE_TYPES.map(t => `<option value="${t}" ${t===variable.variableType?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        ${renderVariableConfig(variable)}
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary><div class="section-title"><strong>🧷 Common fields</strong><span>Default handling and notes</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Default value</label><input class="input" value="${escapeAttr(variable.defaultValue || '')}" oninput="updateSelected('defaultValue', this.value)"></div>
+          <div class="field"><label>Convert undefined to</label>
+            <select class="select" onchange="updateSelected('convertUndefined', this.value === 'true')">
+              <option value="false" ${!variable.convertUndefined?'selected':''}>false</option>
+              <option value="true" ${variable.convertUndefined?'selected':''}>true</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Notes</label><input class="input" value="${escapeAttr(variable.notes || '')}" oninput="updateSelected('notes', this.value)"></div>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary><div class="section-title"><strong>👁 Preview</strong><span>GTM-style variable object</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="code">${escapeHtml(JSON.stringify(exportVariable(variable), null, 2))}</div>
+      </div>
+    </details>
+  `;
+}
+
+function renderVariableConfig(variable){
+  const cfg = variable.config || {};
+  const type = variable.variableType;
+  if(type === 'DLV'){
+    return `<div class="field"><label>Data layer key</label><input class="input" value="${escapeAttr(cfg.dlKey || '')}" oninput="updateConfig('dlKey', this.value)" placeholder="transaction_id"></div>`;
+  }
+  if(type === 'CONST'){
+    return `<div class="field"><label>Constant value</label><input class="input" value="${escapeAttr(cfg.value || '')}" oninput="updateConfig('value', this.value)"></div>`;
+  }
+  if(type === 'JS'){
+    return `<div class="field"><label>JavaScript variable path</label><input class="input" value="${escapeAttr(cfg.jsPath || '')}" oninput="updateConfig('jsPath', this.value)" placeholder="window.app.userId"></div>`;
+  }
+  if(type === 'URL'){
+    return `<div class="field"><label>URL component</label>
+      <select class="select" onchange="updateConfig('urlComponent', this.value)">
+        ${URL_COMPONENTS.map(c => `<option value="${c}" ${cfg.urlComponent===c?'selected':''}>${c}</option>`).join('')}
+      </select></div>`;
+  }
+  if(type === 'AUTO'){
+    return `<div class="field"><label>Auto-event variable</label>
+      <select class="select" onchange="updateConfig('autoVar', this.value)">
+        ${AUTO_VARIABLES.map(c => `<option value="${c}" ${cfg.autoVar===c?'selected':''}>${c}</option>`).join('')}
+      </select></div>`;
+  }
+  if(type === 'CTXD' || type === 'AEVMD'){
+    return `<div class="field"><label>Cookie name</label><input class="input" value="${escapeAttr(cfg.cookieName || '')}" oninput="updateConfig('cookieName', this.value)"></div>`;
+  }
+  if(type === 'SMREF' || type === 'REGEXM'){
+    const rows = cfg.table || [kvRow()];
+    return `
+      <div class="table-head row-3"><div>Input key</div><div>Output value</div><div></div></div>
+      ${rows.map((row, i) => `
+        <div class="row-3">
+          <input class="input" value="${escapeAttr(row.key)}" oninput="updateLookupRow(${i}, 'key', this.value)">
+          <input class="input" value="${escapeAttr(row.value)}" oninput="updateLookupRow(${i}, 'value', this.value)">
+          <button class="tiny-btn" onclick="removeLookupRow(${i})">×</button>
+        </div>
+      `).join('')}
+      <button class="btn btn-small" onclick="addLookupRow()">+ Add row</button>
+    `;
+  }
+  if(type === 'UNDEF'){
+    return `<div class="helper">Undefined variable type acts as a placeholder and does not need any specific config.</div>`;
+  }
+  return `<div class="helper">Pick a supported variable type to see relevant fields.</div>`;
+}
+
+function renderTemplateViewer(tpl){
+  return `
+    <details class="section" open>
+      <summary><div class="section-title"><strong>${escapeHtml(tpl.icon || '📦')} Template details</strong><span>${escapeHtml(tpl.category)}</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="grid-3">
+          <div class="field"><label>Name</label><input class="input" value="${escapeAttr(tpl.name)}" readonly></div>
+          <div class="field"><label>Category</label><input class="input" value="${escapeAttr(tpl.category)}" readonly></div>
+          <div class="field"><label>Type</label><input class="input" value="${escapeAttr(tpl.type)}" readonly></div>
+        </div>
+        <div class="field"><label>Description</label><textarea class="textarea" readonly>${escapeHtml(tpl.description || '')}</textarea></div>
+        <div class="field"><label>Prefilled payload</label><div class="code">${escapeHtml(JSON.stringify(tpl.payload || {}, null, 2))}</div></div>
+      </div>
+    </details>
+  `;
+}
+
+function renderApiEditor(){
+  const api = state.api;
+  return `
+    <details class="section" open>
+      <summary><div class="section-title"><strong>🔌 OAuth settings</strong><span>Stored locally in browser localStorage</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Client ID</label><input class="input" value="${escapeAttr(api.clientId || '')}" oninput="updateApi('clientId', this.value)"></div>
+          <div class="field"><label>Client Secret</label><input class="input" value="${escapeAttr(api.clientSecret || '')}" oninput="updateApi('clientSecret', this.value)"></div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label>Redirect URI</label><input class="input" value="${escapeAttr(api.redirectUri || '')}" oninput="updateApi('redirectUri', this.value)"></div>
+          <div class="field"><label>Account ID</label><input class="input" value="${escapeAttr(api.accountId || '')}" oninput="updateApi('accountId', this.value)"></div>
+          <div class="field"><label>Container ID</label><input class="input" value="${escapeAttr(api.containerId || '')}" oninput="updateApi('containerId', this.value)"></div>
+        </div>
+        <div class="field"><label>Workspace ID</label><input class="input" value="${escapeAttr(api.workspaceId || '')}" oninput="updateApi('workspaceId', this.value)"></div>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary><div class="section-title"><strong>🧪 Connection status</strong><span>Shows field completeness and endpoint paths</span></div><span>▾</span></summary>
+      <div class="section-body">
+        <div class="helper">OAuth is required for a real live push. This tool stores credentials locally and shows the relevant Google Tag Manager API endpoints, but it does not complete the OAuth browser flow by itself.</div>
+        <div class="code">${escapeHtml(JSON.stringify(getApiStatus(), null, 2))}</div>
+      </div>
+    </details>
+  `;
+}
+
+function updateApi(key, value){
+  state.api[key] = value;
+  saveState();
+}
+
+function getContainerVariableNames(){
+  const container = getActiveContainer();
+  return (container?.variables || []).map(v => v.name);
+}
+
+function updateSelected(key, value){
+  const item = getSelectedItem();
+  if(!item) return;
+  item[key] = value;
+  saveState();
+  renderEditor();
+  renderList();
+}
+
+function updateNestedRow(prop, index, key, value){
+  const item = getSelectedItem();
+  if(!item || !item[prop] || !item[prop][index]) return;
+  item[prop][index][key] = value;
+  saveState();
+  renderEditor();
+}
+
+function addRow(prop){
+  const item = getSelectedItem();
+  if(!item) return;
+  item[prop].push(param('','', prop === 'eventParameters' ? 'template' : 'text'));
+  saveState();
+  renderEditor();
+}
+
+function removeRow(prop, index){
+  const item = getSelectedItem();
+  if(!item) return;
+  item[prop].splice(index,1);
+  saveState();
+  renderEditor();
+}
+
+function toggleLinkedTrigger(triggerId, checked){
+  const item = getSelectedItem();
+  if(!item) return;
+  const current = new Set(item.linkedTriggerIds || []);
+  if(checked) current.add(triggerId); else current.delete(triggerId);
+  item.linkedTriggerIds = Array.from(current);
+  saveState();
+  renderEditor();
+}
+
+function updateCondition(index, key, value){
+  const item = getSelectedItem();
+  if(!item || !item.conditions?.[index]) return;
+  item.conditions[index][key] = value;
+  saveState();
+  renderEditor();
+}
+
+function addCondition(){
+  const item = getSelectedItem();
+  if(!item) return;
+  item.conditions.push(conditionRow());
+  saveState();
+  renderEditor();
+}
+
+function removeCondition(index){
+  const item = getSelectedItem();
+  if(!item) return;
+  item.conditions.splice(index,1);
+  saveState();
+  renderEditor();
+}
+
+function updateConfig(key, value){
+  const item = getSelectedItem();
+  if(!item) return;
+  item.config = item.config || {};
+  item.config[key] = value;
+  saveState();
+  renderEditor();
+}
+
+function addLookupRow(){
+  const item = getSelectedItem();
+  if(!item) return;
+  item.config = item.config || {};
+  item.config.table = item.config.table || [];
+  item.config.table.push(kvRow());
+  saveState();
+  renderEditor();
+}
+
+function updateLookupRow(index, key, value){
+  const item = getSelectedItem();
+  if(!item?.config?.table?.[index]) return;
+  item.config.table[index][key] = value;
+  saveState();
+  renderEditor();
+}
+
+function removeLookupRow(index){
+  const item = getSelectedItem();
+  if(!item?.config?.table) return;
+  item.config.table.splice(index,1);
+  saveState();
+  renderEditor();
+}
+
+function deleteCurrent(){
+  const container = getActiveContainer();
+  if(!container) return;
+  const {section, id} = state.selected;
+  if(section === 'tags') container.tags = container.tags.filter(i => i.id !== id);
+  if(section === 'triggers') container.triggers = container.triggers.filter(i => i.id !== id);
+  if(section === 'variables') container.variables = container.variables.filter(i => i.id !== id);
+  state.selected = {section:'', id:''};
+  toast('Deleted', 'Item removed from active container.', 'success');
+  render();
+}
+
+function duplicateCurrent(){
+  const item = getSelectedItem();
+  const container = getActiveContainer();
+  if(!item || !container){
+    toast('Nothing selected', 'Pick an item first.', 'error');
+    return;
+  }
+  const clone = deepClone(item);
+  clone.id = uid(state.activeSection.slice(0,-1));
+  clone.name = item.name + ' Copy';
+  if(state.activeSection === 'tags') container.tags.unshift(clone);
+  if(state.activeSection === 'triggers') container.triggers.unshift(clone);
+  if(state.activeSection === 'variables') container.variables.unshift(clone);
+  if(state.activeSection === 'templates') state.templates.push(clone);
+  state.selected = {section: state.activeSection, id: clone.id};
+  toast('Duplicated', 'A copy was created.', 'success');
+  render();
+}
+
+function saveCurrent(){
+  toast('Saved', 'Changes are already stored locally.', 'success');
+  render();
+}
+
+function saveReusable(){
+  const item = getSelectedItem();
+  if(!item || !['tags','triggers','variables'].includes(state.activeSection)){
+    toast('Not supported', 'Only tags, triggers, and variables can be saved as reusable items.', 'error');
+    return;
+  }
+  const bucket = state.reusables[state.activeSection];
+  const clone = deepClone(item);
+  clone.reusableId = uid('reusable');
+  bucket.unshift(clone);
+  toast('Reusable saved', 'You can reuse this item in any site container.', 'success');
+  saveState();
+}
+
+function openReusablePicker(bucket){
+  const list = state.reusables[bucket] || [];
+  const singular = bucket.slice(0,-1);
+  openModal({
+    title: 'Reusable ' + singular + ' library',
+    body: `
+      <div class="template-grid">
+        ${list.length ? list.map(item => `
+          <div class="template-tile">
+            <h4>${escapeHtml(item.name)}</h4>
+            <p>${escapeHtml(item.notes || item[singular + 'Type'] || item.tagType || item.triggerType || item.variableType || '')}</p>
+            <div class="badges" style="margin-top:10px"><span class="badge">${bucket}</span></div>
+            <div class="action-row" style="margin-top:12px">
+              <button class="btn btn-small btn-primary" onclick="useReusable('${bucket}','${item.reusableId}')">Use</button>
+            </div>
+          </div>
+        `).join('') : '<div class="helper">No reusable items saved yet.</div>'}
+      </div>
+    `
+  });
+}
+
+function useReusable(bucket, reusableId){
+  const container = getActiveContainer();
+  if(!container){ toast('No container', 'Create or select a container first.', 'error'); return; }
+  const item = state.reusables[bucket].find(x => x.reusableId === reusableId);
+  if(!item){ toast('Missing', 'Reusable item not found.', 'error'); return; }
+  const clone = deepClone(item);
+  delete clone.reusableId;
+  clone.id = uid(bucket.slice(0,-1));
+  clone.name = clone.name + ' Copy';
+  container[bucket].unshift(clone);
+  state.activeSection = bucket;
+  state.selected = {section: bucket, id: clone.id};
+  closeModal();
+  toast('Reusable added', 'The reusable item was copied into this container.', 'success');
+  render();
+}
+
+function useTemplate(templateId){
+  const tpl = state.templates.find(t => t.id === templateId);
+  const container = getActiveContainer();
+  if(!tpl){ toast('Missing template', 'Template not found.', 'error'); return; }
+  if(!container){ toast('No container', 'Create or select a container first.', 'error'); return; }
+  let item;
+  if(tpl.type === 'tag'){
+    item = makeTag({...deepClone(tpl.payload), name: tpl.name});
+    container.tags.unshift(item);
+    state.activeSection = 'tags';
+    state.selected = {section:'tags', id:item.id};
+  }else if(tpl.type === 'trigger'){
+    item = makeTrigger({...deepClone(tpl.payload), name: tpl.name});
+    container.triggers.unshift(item);
+    state.activeSection = 'triggers';
+    state.selected = {section:'triggers', id:item.id};
+  }else{
+    item = makeVariable({...deepClone(tpl.payload), name: tpl.name});
+    container.variables.unshift(item);
+    state.activeSection = 'variables';
+    state.selected = {section:'variables', id:item.id};
+  }
+  closeModal();
+  toast('Template used', `${tpl.name} was copied into the active container.`, 'success');
+  render();
+}
+
+function openTemplatePicker(type){
+  const container = getActiveContainer();
+  if(!container){ toast('No container', 'Create or select a container first.', 'error'); return; }
+  const templates = state.templates.filter(t => t.type === type);
+  openModal({
+    title: 'Pick a template',
+    body: `
+      <div class="template-grid">
+        ${templates.map(tpl => `
+          <div class="template-tile">
+            <div class="badges"><span class="badge">${escapeHtml(tpl.category)}</span></div>
+            <h4>${escapeHtml(tpl.icon || '📦')} ${escapeHtml(tpl.name)}</h4>
+            <p>${escapeHtml(tpl.description || '')}</p>
+            <div class="action-row" style="margin-top:12px">
+              <button class="btn btn-small btn-primary" onclick="useTemplate('${tpl.id}')">Use</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="helper">Use copies the template into the active container. You can edit it after inserting it.</div>
+    `
+  });
+}
+
+function openTemplateEditor(templateId=''){
+  const existing = templateId ? state.templates.find(t => t.id === templateId) : null;
+  const categories = [...new Set([...DEFAULT_CATEGORY_ORDER, ...state.templates.map(t => t.category)])];
+  openModal({
+    title: existing ? 'Edit custom template' : 'New custom template',
+    body: `
+      <div class="grid-3">
+        <div class="field"><label>Name</label><input id="tplName" class="input" value="${escapeAttr(existing?.name || '')}"></div>
+        <div class="field"><label>Category</label>
+          <select id="tplCategory" class="select">
+            ${categories.map(c => `<option value="${escapeAttr(c)}" ${existing?.category===c?'selected':''}>${escapeHtml(c)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Type</label>
+          <select id="tplType" class="select" onchange="renderTemplatePayloadHelper()">
+            ${['tag','trigger','variable'].map(type => `<option value="${type}" ${existing?.type===type?'selected':''}>${type}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Icon</label><input id="tplIcon" class="input" value="${escapeAttr(existing?.icon || '📦')}"></div>
+        <div class="field"><label>Description</label><input id="tplDesc" class="input" value="${escapeAttr(existing?.description || '')}"></div>
+      </div>
+      <div class="field">
+        <label>Pre-filled payload (JSON)</label>
+        <textarea id="tplPayload" class="textarea" style="min-height:220px">${escapeHtml(JSON.stringify(existing?.payload || {}, null, 2))}</textarea>
+      </div>
+      <div class="helper">Payload should match the target type shape. Tags can include tagType, parameters, eventParameters, rawHtml, linkedTriggerIds, notes. Triggers can include triggerType, logic, conditions, and extra fields. Variables can include variableType, config, defaultValue, and convertUndefined.</div>
+    `,
+    footer: `
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTemplateForm('${existing?.id || ''}')">${existing ? 'Save changes' : 'Create template'}</button>
+    `
+  });
+}
+
+function renderTemplatePayloadHelper(){ /* reserved for future inline payload helpers */ }
+
+function saveTemplateForm(templateId=''){
+  try{
+    const name = document.getElementById('tplName').value.trim();
+    const category = document.getElementById('tplCategory').value.trim();
+    const type = document.getElementById('tplType').value;
+    const icon = document.getElementById('tplIcon').value.trim() || '📦';
+    const description = document.getElementById('tplDesc').value.trim();
+    const payload = JSON.parse(document.getElementById('tplPayload').value || '{}');
+    if(!name || !category) throw new Error('Name and category are required.');
+    if(templateId){
+      const tpl = state.templates.find(t => t.id === templateId);
+      if(!tpl) throw new Error('Template not found.');
+      Object.assign(tpl, {name, category, type, icon, description, payload});
+      toast('Template updated', 'Custom template saved.', 'success');
+    }else{
+      state.templates.push({id:uid('tpl'), builtIn:false, name, category, type, icon, description, payload});
+      toast('Template created', 'Custom template added to the library.', 'success');
+    }
+    closeModal();
+    render();
+  }catch(err){
+    toast('Template error', err.message, 'error');
+  }
+}
+
+function deleteTemplate(id){
+  const tpl = state.templates.find(t => t.id === id);
+  if(!tpl || tpl.builtIn){
+    toast('Blocked', 'Built-in templates cannot be deleted.', 'error');
+    return;
+  }
+  state.templates = state.templates.filter(t => t.id !== id);
+  state.selected = {section:'', id:''};
+  toast('Template deleted', 'Custom template removed.', 'success');
+  render();
+}
+
+function openCategoryPrompt(){
+  openModal({
+    title: 'Add category',
+    body: `<div class="field"><label>Category name</label><input id="newCategoryName" class="input" placeholder="e.g. Checkout"></div><div class="helper">Categories are available when creating or editing custom templates.</div>`,
+    footer: `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addCategory()">Add</button>`
+  });
+}
+
+function addCategory(){
+  const name = document.getElementById('newCategoryName').value.trim();
+  if(!name){ toast('Missing name', 'Enter a category name.', 'error'); return; }
+  state.templates.push({id:uid('tplcat'), builtIn:false, name:`Starter ${name} template`, category:name, type:'tag', icon:'✨', description:'Placeholder custom template for the new category.', payload:{tagType:'googtag', parameters:[param('event_name','sample','text')] }});
+  closeModal();
+  toast('Category added', 'A starter template was added under the new category.', 'success');
+  render();
+}
+
+function openContainerModal(prefillNew=false){
+  const rows = state.containers.map(c => `
+    <label class="check">
+      <input type="radio" name="containerPick" ${c.id===state.activeContainerId?'checked':''} onchange="switchContainer('${c.id}')">
+      <div>
+        <strong>${escapeHtml(c.name)}</strong>
+        <div class="helper">${escapeHtml(c.gtmContainerId || 'No GTM ID')} · ${escapeHtml(c.siteUrl || 'No URL')}</div>
+      </div>
+    </label>
+  `).join('');
+
+  openModal({
+    title: 'Containers',
+    body: `
+      <div class="grid-2">
+        <div>
+          <h4 style="margin-bottom:8px">Switch active container</h4>
+          <div class="checkbox-list">${rows}</div>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px">Create container</h4>
+          <div class="field"><label>Name</label><input id="containerName" class="input" placeholder="e.g. Main ecommerce site" value="${prefillNew ? '' : ''}"></div>
+          <div class="grid-2">
+            <div class="field"><label>GTM container ID</label><input id="containerPublicId" class="input" placeholder="GTM-XXXXXXX"></div>
+            <div class="field"><label>Site URL</label><input id="containerUrl" class="input" placeholder="https://example.com"></div>
+          </div>
+          <div class="field"><label>Description</label><textarea id="containerDesc" class="textarea" placeholder="What this container is for"></textarea></div>
+          <div class="action-row"><button class="btn btn-primary" onclick="createContainer()">Create container</button></div>
+        </div>
+      </div>
+    `
+  });
+}
+
+function switchContainer(id){
+  state.activeContainerId = id;
+  state.selected = {section:'', id:''};
+  closeModal();
+  toast('Container switched', 'Active container updated.', 'success');
+  render();
+}
+
+function createContainer(){
+  const name = document.getElementById('containerName').value.trim();
+  const gtmContainerId = document.getElementById('containerPublicId').value.trim();
+  const siteUrl = document.getElementById('containerUrl').value.trim();
+  const description = document.getElementById('containerDesc').value.trim();
+  if(!name){
+    toast('Container name required', 'Enter a container name.', 'error');
+    return;
+  }
+  const container = newContainer({name, gtmContainerId, siteUrl, description});
+  state.containers.unshift(container);
+  state.activeContainerId = container.id;
+  state.selected = {section:'', id:''};
+  closeModal();
+  toast('Container created', 'New container added and selected.', 'success');
+  render();
+}
+
+function exportAll(){
+  const container = getActiveContainer();
+  if(!container){
+    toast('No container', 'Create or select a container first.', 'error');
+    return;
+  }
+  state.exportName = (document.getElementById('exportName').value || 'gtm_workspace_export').trim();
+  const json = buildExportObject();
+  const blob = new Blob([JSON.stringify(json, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${slug(state.exportName || container.name || 'gtm_export')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  container.history.unshift({
+    id: uid('hist'),
+    time: new Date().toISOString(),
+    filename: a.download,
+    counts: {tags: container.tags.length, triggers: container.triggers.length, variables: container.variables.length}
+  });
+  toast('Exported', 'Combined JSON downloaded for the active site container.', 'success');
+  render();
+}
+
+function buildExportObject(){
+  const container = getActiveContainer();
+  if(!container) return {};
+  return {
+    exportFormatVersion: 2,
+    exportTime: new Date().toISOString(),
+    containerVersion: {
+      container: {
+        name: container.name,
+        publicId: container.gtmContainerId,
+        notes: container.description,
+        websiteUrl: container.siteUrl,
+        version: APP_VERSION
+      },
+      tag: container.tags.map(exportTag),
+      trigger: container.triggers.map(exportTrigger),
+      variable: container.variables.map(exportVariable)
+    }
+  };
+}
+
+function exportTag(tag){
+  return {
+    tagId: tag.id,
+    name: tag.name,
+    type: tag.tagType,
+    priority: {type:'integer', value:String(Number(tag.priority || 0))},
+    parameter: [
+      ...(tag.parameters || []).map(p => ({key:p.key, type:p.type || 'text', value:p.value})),
+      ...(tag.tagType === 'html' && tag.rawHtml ? [{key:'html', type:'template', value:tag.rawHtml}] : [])
+    ],
+    eventParameter: (tag.eventParameters || []).map(p => ({key:p.key, type:p.type || 'template', value:p.value})),
+    firingTriggerId: tag.linkedTriggerIds || [],
+    notes: tag.notes || ''
+  };
+}
+
+function exportTrigger(trigger){
+  const params = [];
+  if(trigger.customEventName) params.push({key:'eventName', type:'text', value:trigger.customEventName});
+  if(trigger.scrollPercentages) params.push({key:'scrollPercentages', type:'text', value:trigger.scrollPercentages});
+  if(trigger.timerInterval) params.push({key:'interval', type:'integer', value:String(trigger.timerInterval)});
+  if(trigger.elementSelector) params.push({key:'selector', type:'text', value:trigger.elementSelector});
+  return {
+    triggerId: trigger.id,
+    name: trigger.name,
+    type: trigger.triggerType,
+    logic: trigger.logic,
+    parameter: params,
+    filter: (trigger.conditions || []).map((c, index) => ({
+      filterId: trigger.id + '_' + index,
+      variable: c.variable,
+      operator: c.operator,
+      value: c.value
+    })),
+    notes: trigger.notes || ''
+  };
+}
+
+function exportVariable(variable){
+  return {
+    variableId: variable.id,
+    name: variable.name,
+    type: variable.variableType,
+    parameter: Object.entries(variable.config || {}).map(([key, value]) => ({
+      key,
+      type: Array.isArray(value) ? 'list' : 'text',
+      value: Array.isArray(value) ? JSON.stringify(value) : String(value ?? '')
+    })),
+    defaultValue: variable.defaultValue || '',
+    convertUndefinedToValue: !!variable.convertUndefined,
+    notes: variable.notes || ''
+  };
+}
+
+function triggerImport(){
+  const container = getActiveContainer();
+  if(!container){
+    toast('No container', 'Create or select a container first.', 'error');
+    return;
+  }
+  document.getElementById('importInput').click();
+}
+
+document.getElementById('importInput').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const json = JSON.parse(text);
+    importExportJson(json);
+    toast('Imported', 'Tags, triggers, and variables were added to the active container.', 'success');
+  }catch(err){
+    toast('Import failed', err.message, 'error');
+  }finally{
+    e.target.value = '';
+  }
+});
+
+function importExportJson(json){
+  const container = getActiveContainer();
+  if(!container) throw new Error('No active container selected.');
+  const tagArr = json?.containerVersion?.tag || json?.tag || [];
+  const triggerArr = json?.containerVersion?.trigger || json?.trigger || [];
+  const variableArr = json?.containerVersion?.variable || json?.variable || [];
+
+  tagArr.forEach(t => {
+    container.tags.push(makeTag({
+      name: t.name || 'Imported Tag',
+      tagType: t.type || t.tagType || 'googtag',
+      priority: Number(t.priority?.value || t.priority || 0),
+      parameters: (t.parameter || []).filter(p => p.key !== 'html').map(p => param(p.key, p.value, p.type || 'text')),
+      eventParameters: (t.eventParameter || []).map(p => param(p.key, p.value, p.type || 'template')),
+      rawHtml: (t.parameter || []).find(p => p.key === 'html')?.value || '',
+      linkedTriggerIds: t.firingTriggerId || [],
+      notes: t.notes || ''
+    }));
+  });
+
+  triggerArr.forEach(t => {
+    container.triggers.push(makeTrigger({
+      name: t.name || 'Imported Trigger',
+      triggerType: t.type || 'PAGEVIEW',
+      logic: t.logic || 'AND',
+      customEventName: getParamValue(t.parameter, 'eventName'),
+      scrollPercentages: getParamValue(t.parameter, 'scrollPercentages') || '50',
+      timerInterval: getParamValue(t.parameter, 'interval') || '3000',
+      elementSelector: getParamValue(t.parameter, 'selector') || '',
+      conditions: (t.filter || []).map(f => conditionRow(f.variable || 'Page URL', f.operator || 'contains', f.value || '')),
+      notes: t.notes || ''
+    }));
+  });
+
+  variableArr.forEach(v => {
+    const cfg = {};
+    (v.parameter || []).forEach(p => {
+      try{
+        cfg[p.key] = p.type === 'list' ? JSON.parse(p.value) : p.value;
+      }catch{
+        cfg[p.key] = p.value;
+      }
+    });
+    container.variables.push(makeVariable({
+      name: v.name || 'Imported Variable',
+      variableType: v.type || 'DLV',
+      config: cfg,
+      defaultValue: v.defaultValue || '',
+      convertUndefined: !!v.convertUndefinedToValue,
+      notes: v.notes || ''
+    }));
+  });
+  render();
+}
+
+function getParamValue(arr, key){
+  return (arr || []).find(p => p.key === key)?.value || '';
+}
+
+function saveCredentials(){
+  saveState();
+  toast('Saved', 'API credentials stored in localStorage.', 'success');
+}
+
+function clearCredentials(){
+  state.api = {clientId:'', clientSecret:'', redirectUri:'', accountId:'', containerId:'', workspaceId:''};
+  saveState();
+  render();
+  toast('Cleared', 'API credentials removed from localStorage.', 'success');
+}
+
+function getApiStatus(){
+  const api = state.api;
+  const complete = ['clientId','clientSecret','redirectUri','accountId','containerId','workspaceId'].every(key => !!api[key]);
+  const workspacePath = api.accountId && api.containerId && api.workspaceId
+    ? `accounts/${api.accountId}/containers/${api.containerId}/workspaces/${api.workspaceId}`
+    : 'Fill account/container/workspace IDs to build endpoint paths';
+  return {
+    credentialsPresent: {
+      clientId: !!api.clientId,
+      clientSecret: !!api.clientSecret,
+      redirectUri: !!api.redirectUri,
+      accountId: !!api.accountId,
+      containerId: !!api.containerId,
+      workspaceId: !!api.workspaceId
+    },
+    readyForOAuthFlow: complete,
+    endpoints: complete ? {
+      getWorkspace: `GET https://tagmanager.googleapis.com/tagmanager/v2/${workspacePath}`,
+      createTag: `POST https://tagmanager.googleapis.com/tagmanager/v2/${workspacePath}/tags`,
+      createTrigger: `POST https://tagmanager.googleapis.com/tagmanager/v2/${workspacePath}/triggers`,
+      createVariable: `POST https://tagmanager.googleapis.com/tagmanager/v2/${workspacePath}/variables`
+    } : {
+      note: workspacePath
+    }
+  };
+}
+
+function testConnection(){
+  const status = getApiStatus();
+  openModal({
+    title: 'Credential status',
+    body: `<div class="code">${escapeHtml(JSON.stringify(status, null, 2))}</div>`,
+    footer: `<button class="btn btn-primary" onclick="closeModal()">Close</button>`
+  });
+}
+
+function pushToGTM(){
+  const status = getApiStatus();
+  const payload = buildExportObject();
+  openModal({
+    title: 'Push to GTM',
+    body: `
+      <div class="helper" style="margin-bottom:12px">Live push requires a real OAuth access token and GTM API calls. This tool shows the export payload and the endpoint paths you would use once OAuth is completed.</div>
+      <div class="code">${escapeHtml(JSON.stringify({status, payloadPreview: payload}, null, 2))}</div>
+    `,
+    footer: `<button class="btn btn-primary" onclick="closeModal()">Close</button>`
+  });
+}
+
+function openModal({title='', body='', footer=''}){
+  const wrap = document.getElementById('modalBackdrop');
+  wrap.innerHTML = `
+    <div class="modal">
+      <div class="modal-head"><strong>${escapeHtml(title)}</strong><button class="btn btn-small" onclick="closeModal()">✕</button></div>
+      <div class="modal-body">${body}</div>
+      <div class="modal-foot">${footer || '<button class="btn btn-primary" onclick="closeModal()">Done</button>'}</div>
+    </div>
+  `;
+  wrap.classList.add('show');
+}
+
+function closeModal(){
+  const wrap = document.getElementById('modalBackdrop');
+  wrap.classList.remove('show');
+  wrap.innerHTML = '';
+}
+
+function toast(title, msg, type='info'){
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<div class="toast-title">${escapeHtml(title)}</div><div class="toast-msg">${escapeHtml(msg)}</div>`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function slug(value){
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'export';
+}
+
+function escapeHtml(str){
+  return String(str ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+render();
+</script>
+</body>
+</html>
