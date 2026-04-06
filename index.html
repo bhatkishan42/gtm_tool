@@ -669,6 +669,14 @@ function saveTemplateCategories(){
 
 const DEFAULT_TEMPLATE_CATEGORIES = getDefaultTemplateCategories();
 const DEFAULT_TEMPLATE_CATEGORY_IDS = new Set(DEFAULT_TEMPLATE_CATEGORIES.map(c=>c.id));
+function normalizeTemplateCategories(categories){
+  const byId=new Map((categories||[]).filter(c=>c&&c.id).map(c=>[c.id,c]));
+  const defaultsOrdered=DEFAULT_TEMPLATE_CATEGORIES.map(c=>byId.get(c.id)||c);
+  const customSorted=[...byId.values()]
+    .filter(c=>!DEFAULT_TEMPLATE_CATEGORY_IDS.has(c.id))
+    .sort((a,b)=>(a.label||a.id).localeCompare(b.label||b.id));
+  return [...defaultsOrdered,...customSorted];
+}
 
 // ══════════════════════════════════════════════════════════════
 // DEFAULT DATA
@@ -1603,7 +1611,7 @@ function addTemplateCategory(){
   const id=label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   if(!id){toast('Invalid category name','error');return;}
   if(APP.templateCategories.some(c=>c.id===id)){toast('Category already exists','error');return;}
-  APP.templateCategories.push({id,label,icon:document.getElementById('nc-icon').value||'📁'});
+  APP.templateCategories=normalizeTemplateCategories([...APP.templateCategories,{id,label,icon:document.getElementById('nc-icon').value||'📁'}]);
   saveTemplateCategories();
   APP.activeTemplateCategory=id;
   closeModal();
@@ -1616,7 +1624,7 @@ function removeTemplateCategory(id){
   const cat=APP.templateCategories.find(c=>c.id===id);
   if(!cat){toast('Category not found','error');return;}
   if(!confirm(`Delete category "${cat.label}"? Templates in this category will move to GA4.`)) return;
-  APP.templateCategories=APP.templateCategories.filter(c=>c.id!==id);
+  APP.templateCategories=normalizeTemplateCategories(APP.templateCategories.filter(c=>c.id!==id));
   APP.templates=APP.templates.map(t=>t.cat===id?{...t,cat:'ga4'}:t);
   if(APP.activeTemplateCategory===id) APP.activeTemplateCategory='all';
   saveTemplateCategories();
@@ -1870,10 +1878,7 @@ function init(){
   // Ensure default categories are always available even if localStorage is stale.
   const storedCats=(JSON.parse(localStorage.getItem('gtm_template_categories')||'[]')||[])
     .filter(c=>c && c.id);
-  const storedById=new Map(storedCats.map(c=>[c.id,c]));
-  const mergedDefaults=DEFAULT_TEMPLATE_CATEGORIES.map(c=>storedById.get(c.id)||c);
-  const customCats=storedCats.filter(c=>!DEFAULT_TEMPLATE_CATEGORY_IDS.has(c.id));
-  APP.templateCategories=[...mergedDefaults,...customCats.filter(c=>!mergedDefaults.some(x=>x.id===c.id))];
+  APP.templateCategories=normalizeTemplateCategories(storedCats);
   saveTemplateCategories();
   renderContainers();
   // Restore API creds display
